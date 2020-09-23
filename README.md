@@ -1,16 +1,23 @@
 # Aides Travaux API
 
-## Quelles sont les aides concernées ?
+## Prise en main
 
-Les aides financières à destination des particuliers relevant des dispositifs suivants :
-    - Ma Prime Rénov'
-    - Certificats d'économies d'énergie
-    - Coupe de pouce économies d'énergie
-    - Éco-prêt à taux zéro
-    - Anah Habiter Mieux
+### Recherche des aides
 
+Une recherche des aides disponibles peut être effectuée sur la base des criètres suivants :
 
-## Utilisation
+- Nom de l'aide (Ex. Ma Prime Rénov')
+- Nom du distributeur (Ex. Agence nationale de l'habitat)
+- Périmètre de l'aide (Ex. FR pour la France entière)
+
+#### Exemple
+
+Recherche des aides pour le département de l'Isère uniquement.
+
+GET /aides?distributeur.perimetre[]=38
+
+### Recherche des variables associées à une aide
+
 
 1. Recherche des aides (optionnel)
 
