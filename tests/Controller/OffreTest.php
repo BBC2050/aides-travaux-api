@@ -3,34 +3,34 @@
 namespace App\Tests\Controller;
 
 use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\ApiTestCase;
-use App\Entity\Aide;
+use App\Entity\Offre;
 
-class AideTest extends ApiTestCase
+class OffreTest extends ApiTestCase
 {
     use \App\Tests\Controller\AuthenticationTrait;
 
     public function testGetCollection(): void
     {
-        $response = static::createClient()->request('GET', '/aides');
+        $response = static::createClient()->request('GET', '/offres');
         $data = $response->toArray();
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
-        $this->assertCount(5, $data['hydra:member']);
-        $this->assertEquals(5, $data['hydra:totalItems']);
-        $this->assertMatchesResourceCollectionJsonSchema(Aide::class);
+        $this->assertCount(9, $data['hydra:member']);
+        $this->assertEquals(9, $data['hydra:totalItems']);
+        $this->assertMatchesResourceCollectionJsonSchema(Offre::class);
     }
 
     public function testCreateAnon(): void
     {
-        $response = static::createClient()->request('POST', '/aides');
+        $response = static::createClient()->request('POST', '/offres');
         $this->assertResponseStatusCodeSame(401);
     }
 
     public function testCreateInvalid(): void
     {
         $client = self::authorization();
-        $client->request('POST', '/aides', [ 'json' => [] ]);
+        $client->request('POST', '/offres', [ 'json' => [] ]);
         
         $this->assertResponseStatusCodeSame(400);
     }
@@ -38,54 +38,49 @@ class AideTest extends ApiTestCase
     public function testCreate(): void
     {
         $client = self::authorization();
-        $client->request('POST', '/aides', [
+        $client->request('POST', '/offres', [
             'json' => [
-                'code' => 'M',
                 'nom' => 'Doe',
-                'description' => 'John',
-                'type' => 'prime',
-                'delai' => '75000',
                 'active' => false,
-                'distributeur' => [
-                    'nom' => 'test'
-                ]
+                'aide' => '/aides/1',
+                'ouvrage' => '/ouvrages/1'
             ]
         ]);
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
-        $this->assertMatchesResourceItemJsonSchema(Aide::class);
+        $this->assertMatchesResourceItemJsonSchema(Offre::class);
     }
 
     public function testUpdateAnon(): void
     {
-        static::createClient()->request('PUT', '/aides/1');
+        static::createClient()->request('PUT', '/offres/1');
         $this->assertResponseStatusCodeSame(401);
     }
 
     public function testUpdate(): void
     {
         $client = self::authorization();
-        $client->request('PUT', '/aides/1', [
+        $client->request('PUT', '/offres/1', [
             'json' => [ 'nom' => 'Updated' ]
         ]);
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('Content-Type', 'application/ld+json; charset=utf-8');
-        $this->assertMatchesResourceItemJsonSchema(Aide::class);
+        $this->assertMatchesResourceItemJsonSchema(Offre::class);
         $this->assertJsonContains([ 'nom' => 'Updated' ]);
     }
 
     public function testDeleteAnon(): void
     {
-        static::createClient()->request('DELETE', '/aides/1');
+        static::createClient()->request('DELETE', '/offres/1');
         $this->assertResponseStatusCodeSame(401);
     }
 
     public function testDelete(): void
     {
         $client = self::authorization();
-        $client->request('DELETE', '/aides/1');
+        $client->request('DELETE', '/offres/1');
 
         $this->assertResponseStatusCodeSame(204);
     }

@@ -11,6 +11,8 @@ use App\Entity\Aide;
 abstract class Requete
 {
     /**
+     * Tableau des aides à estimer
+     * 
      * @var Collection|Aide[]
      * 
      * @Groups({"simulation:item:read", "simulation:item:write"})
@@ -19,6 +21,9 @@ abstract class Requete
     protected $aides;
 
     /**
+     * Tableau des travaux pour lesquels l'on souhaite obtenir une estimation
+     * des aides
+     * 
      * @var Collection|Ouvrage[]
      * 
      * @Groups({"simulation:item:read", "simulation:item:write"})
@@ -28,6 +33,9 @@ abstract class Requete
     protected $ouvrages;
 
     /**
+     * Précise le périmètre de recherche des aides financières dans le cas d'une
+     * simulation from scratch
+     * 
      * @var bool
      * 
      * @Groups({"simulation:item:read", "simulation:item:write"})

@@ -43,6 +43,21 @@ class Condition
     /**
      * @var string
      * 
+     * @Groups({ 
+     *      "aide:item:read", 
+     *      "aide:item:write",
+     *      "simulation:item:read"
+     * })
+     * @Assert\NotBlank(groups={"postValidation"})
+     * @Assert\Type("string")
+     * @Assert\Length(max=180)
+     * @ORM\Column(type="string", length=180, nullable=true)
+     */
+    private $groupe;
+
+    /**
+     * @var string
+     * 
      * @Groups({
      *      "aide:item:read", 
      *      "aide:item:write",
@@ -73,6 +88,18 @@ class Condition
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function getGroupe(): ?string
+    {
+        return $this->groupe;
+    }
+
+    public function setGroupe(?string $groupe): self
+    {
+        $this->groupe = $groupe;
 
         return $this;
     }

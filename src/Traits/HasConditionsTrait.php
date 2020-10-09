@@ -25,11 +25,41 @@ trait HasConditionsTrait
      */
     public function isEligible(): bool
     {
-        foreach ($this->conditions as $condition) {
+        $simpleConditions = $this->conditions->filter(function($condition) {
+            return $condition->getGroupe() === null;
+        });
+        $groupedConditions = $this->conditions->filter(function($condition) {
+            return $condition->getGroupe() !== null;
+        });
+        $groupes = [];
+
+        /** Hydrate groupes */
+        foreach ($groupedConditions as $condition) {
+            if (!in_array($condition->getGroupe(), $groupes)) {
+                $groupes[] = $condition->getGroupe();
+            }
+        }
+
+        /** Parse simple conditions */
+        foreach ($simpleConditions as $condition) {
             if ($condition->getResponse() === false) {
                 return false;
             }
-            continue;
+        }
+
+        /** Parse grouped conditions */
+        foreach ($groupes as $groupe) {
+            $isEligible = false;
+            $conditions = $groupedConditions->filter(function($condition) use ($groupe) {
+                return $condition->getGroupe() === $groupe;
+            });
+            foreach ($conditions as $condition) {
+                if ($condition->getResponse() === true) {
+                    $isEligible = true;
+                    break;
+                }
+            }
+            if (!$isEligible) { return false; }
         }
         return true;
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Controller\Core;
+namespace App\Tests\Controller;
 
 use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\ApiTestCase;
 use App\Entity\Ouvrage;
@@ -9,15 +9,9 @@ class OuvrageTest extends ApiTestCase
 {
     use \App\Tests\Controller\AuthenticationTrait;
 
-    public function testGetCollectionAnon(): void
-    {
-        static::createClient()->request('GET', '/ouvrages');
-        $this->assertResponseStatusCodeSame(401);
-    }
-
     public function testGetCollection(): void
-    {        
-        $response = static::createClient()->request('GET', '/ouvrages', [ 'headers' => self::authorization() ]);
+    {
+        $response = static::createClient()->request('GET', '/ouvrages');
         $data = $response->toArray();
 
         $this->assertResponseIsSuccessful();
@@ -29,31 +23,30 @@ class OuvrageTest extends ApiTestCase
 
     public function testCreateAnon(): void
     {
-        static::createClient()->request('POST', '/ouvrages');
+        $response = static::createClient()->request('POST', '/ouvrages');
         $this->assertResponseStatusCodeSame(401);
     }
 
     public function testCreateInvalid(): void
     {
-        static::createClient()->request('POST', '/ouvrages', [
-            'headers' => self::authorization(),
-            'json' => []
-        ]);
+        $client = self::authorization();
+        $client->request('POST', '/ouvrages', [ 'json' => [] ]);
+        
         $this->assertResponseStatusCodeSame(400);
     }
 
     public function testCreate(): void
     {
-        static::createClient()->request('POST', '/ouvrages', [
-            'headers' => self::authorization(),
+        $client = self::authorization();
+        $client->request('POST', '/ouvrages', [
             'json' => [
-                'code' => 'CODE',
-                'nom' => 'Test'
+                'code' => 'Code',
+                'nom' => 'Doe'
             ]
         ]);
+
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
-
         $this->assertMatchesResourceItemJsonSchema(Ouvrage::class);
     }
 
@@ -65,13 +58,13 @@ class OuvrageTest extends ApiTestCase
 
     public function testUpdate(): void
     {
-        static::createClient()->request('PUT', '/ouvrages/1', [
-            'headers' => self::authorization(),
+        $client = self::authorization();
+        $client->request('PUT', '/ouvrages/1', [
             'json' => [ 'nom' => 'Updated' ]
         ]);
 
         $this->assertResponseIsSuccessful();
-        $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
+        $this->assertResponseHeaderSame('Content-Type', 'application/ld+json; charset=utf-8');
         $this->assertMatchesResourceItemJsonSchema(Ouvrage::class);
         $this->assertJsonContains([ 'nom' => 'Updated' ]);
     }
@@ -84,7 +77,9 @@ class OuvrageTest extends ApiTestCase
 
     public function testDelete(): void
     {
-        static::createClient()->request('DELETE', '/ouvrages/1', [ 'headers' => self::authorization() ]);
+        $client = self::authorization();
+        $client->request('DELETE', '/ouvrages/1');
+
         $this->assertResponseStatusCodeSame(204);
     }
 }

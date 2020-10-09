@@ -66,7 +66,7 @@ class Simulation extends Requete
      * @Assert\Type("integer")
      * @Assert\Positive
      */
-    private $compositionFoyer;
+    private $compositionFoyer = 1;
 
     /**
      * @var int
@@ -76,7 +76,7 @@ class Simulation extends Requete
      * @Assert\Type("integer")
      * @Assert\Positive
      */
-    private $revenusFoyer;
+    private $revenusFoyer = 0;
 
     /**
      * @var string
@@ -160,6 +160,15 @@ class Simulation extends Requete
      * @Assert\Choice(choices=Variables::CODES_OCCUPATION)
      */
     private $codeOccupation;
+
+    /**
+     * @var float
+     * 
+     * @Groups({"simulation:item:read", "simulation:item:write"})
+     * @Assert\NotBlank
+     * @Assert\PositiveOrZero
+     */
+    private $valeurCee = 0;
 
     public function getId(): int
     {
@@ -334,9 +343,20 @@ class Simulation extends Requete
         return $this;
     }
 
+    public function getValeurCee(): ?float
+    {
+        return $this->valeurCee;
+    }
+
+    public function setValeurCee(?float $valeurCee): self
+    {
+        $this->valeurCee = $valeurCee;
+
+        return $this;
+    }
+
     public function __call(string $name, array $arguments)
     {
         return null;
     }
-
 }

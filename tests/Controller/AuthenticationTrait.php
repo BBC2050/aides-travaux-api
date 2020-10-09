@@ -2,15 +2,26 @@
 
 namespace App\Tests\Controller;
 
-use App\Repository\UtilisateurRepository;
+use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\Client;
 
 trait AuthenticationTrait
 {
-    public static function authorization($superAdmin = false): array
+    public static function authorization($superAdmin = false): Client
     {
-        $userRepository = static::$container->get(UtilisateurRepository::class);
-        $user = $userRepository->find($superAdmin ? 3 : 2);
+        $client = static::createClient();
+        $response = $client->request('POST', '/authentication_token', [
+            'json' => [
+                'email' => $superAdmin ? 'superadmin@test.com' : 'admin@test.com',
+                'plainPassword' => 'utilisateurtest',
+            ]
+        ]);
 
-        return [ 'API_KEY' => $user->getUuid() ];
+        $data = $response->toArray();
+
+        $client = static::createClient();
+        $client->setDefaultOptions(['auth_bearer' => $data['token']]);
+
+        return $client;
+        //return sprintf('Bearer %s', $data['token']);
     }
 }

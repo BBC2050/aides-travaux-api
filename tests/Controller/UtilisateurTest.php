@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Controller\Core;
+namespace App\Tests\Controller;
 
 use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\ApiTestCase;
 use App\Entity\Utilisateur;
@@ -9,21 +9,18 @@ class UtilisateurTest extends ApiTestCase
 {
     use \App\Tests\Controller\AuthenticationTrait;
 
-    public function testGetCollectionAnon(): void
-    {
-        static::createClient()->request('GET', '/utilisateurs');
-        $this->assertResponseStatusCodeSame(401);
-    }
-
     public function testGetCollectionNotSuperAdmin(): void
     {
-        static::createClient()->request('GET', '/utilisateurs', [ 'headers' => self::authorization() ]);
+        $client = self::authorization();
+        $client->request('GET', '/utilisateurs');
+
         $this->assertResponseStatusCodeSame(403);
     }
 
     public function testGetCollection(): void
-    {        
-        $response = static::createClient()->request('GET', '/utilisateurs', [ 'headers' => self::authorization(true) ]);
+    {
+        $client = self::authorization(true);
+        $response = $client->request('GET', '/utilisateurs');
         $data = $response->toArray();
 
         $this->assertResponseIsSuccessful();
@@ -33,46 +30,50 @@ class UtilisateurTest extends ApiTestCase
         $this->assertMatchesResourceCollectionJsonSchema(Utilisateur::class);
     }
 
-    public function testCreateAnon(): void
-    {
-        static::createClient()->request('POST', '/utilisateurs');
-        $this->assertResponseStatusCodeSame(401);
-    }
-
     public function testCreateNotSuperAdmin(): void
     {
-        static::createClient()->request('POST', '/utilisateurs', [ 'headers' => self::authorization() ]);
+        $client = self::authorization();
+        $client->request('POST', '/utilisateurs');
+
         $this->assertResponseStatusCodeSame(403);
+    }
+
+    public function testCreateInvalid(): void
+    {
+        $client = self::authorization(true);
+        $client->request('POST', '/utilisateurs', [ 'json' => [] ]);
+        
+        $this->assertResponseStatusCodeSame(400);
     }
 
     public function testCreate(): void
     {
-        static::createClient()->request('POST', '/utilisateurs', [
-            'headers' => self::authorization(true),
-            'json' => []
+        $client = self::authorization(true);
+        $client->request('POST', '/utilisateurs', [
+            'json' => [
+                'email' => 'johndoe@gmail.com',
+                'plainPassword' => 'passwordtest'
+            ]
         ]);
+
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
-
         $this->assertMatchesResourceItemJsonSchema(Utilisateur::class);
-    }
-
-    public function testDeleteAnon(): void
-    {
-        static::createClient()->request('DELETE', '/utilisateurs/1');
-        $this->assertResponseStatusCodeSame(401);
     }
 
     public function testDeleteNotSuperAdmin(): void
     {
-        static::createClient()->request('DELETE', '/utilisateurs/1', [ 'headers' => self::authorization() ]);
+        $client = self::authorization();
+        $client->request('DELETE', '/utilisateurs/1');
+
         $this->assertResponseStatusCodeSame(403);
     }
 
     public function testDelete(): void
     {
-        static::createClient()->request('DELETE', '/utilisateurs/1', [ 'headers' => self::authorization(true) ]);
+        $client = self::authorization(true);
+        $client->request('DELETE', '/utilisateurs/1');
+
         $this->assertResponseStatusCodeSame(204);
     }
-
 }

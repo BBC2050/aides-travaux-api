@@ -45,3 +45,14 @@ Exemple:
 4. Sélection des ouvrages et intégration des variables par ouvrage
 
 Exemple: GET /variables?offres.ouvrage=1&offres.aide=3
+
+## Conditions
+
+Des conditions peuvent être paramétrées pour chaque aide et/ou offre rattachée afin de déterminer l'éligibilité d'une demande. Elles se déclinent en deux types :
+
+- Les **conditions simples** qui doivent toutes être satisfaites.
+- Les **conditions groupées** dont au moins une doit être satisfaite.
+
+### Exemple
+
+L'aide Ma Prime Rénov' est déclinée par catégorie de ressource (Bleu, Jaune, Violet, Rose).

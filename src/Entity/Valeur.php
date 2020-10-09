@@ -57,7 +57,7 @@ class Valeur
      * @Assert\ExpressionLanguageSyntax()
      * @ORM\Column(type="string", length=255)
      */
-    private $valeur = "0";
+    private $expression = "0";
 
     /**
      * @var string
@@ -120,14 +120,14 @@ class Valeur
         return $this;
     }
 
-    public function getValeur(): ?string
+    public function getExpression(): ?string
     {
-        return $this->valeur;
+        return $this->expression;
     }
 
-    public function setValeur(?string $valeur): self
+    public function setExpression(?string $expression): self
     {
-        $this->valeur = $valeur;
+        $this->expression = $expression;
 
         return $this;
     }

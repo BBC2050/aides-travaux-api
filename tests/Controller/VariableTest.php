@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Controller\Core;
+namespace App\Tests\Controller;
 
 use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\ApiTestCase;
 use App\Entity\Variable;
@@ -10,8 +10,9 @@ class VariableTest extends ApiTestCase
     use \App\Tests\Controller\AuthenticationTrait;
 
     public function testGetCollection(): void
-    {        
-        $response = static::createClient()->request('GET', '/variables', [ 'headers' => self::authorization() ]);
+    {
+        $client = self::authorization(true);
+        $response = $client->request('GET', '/variables');
         $data = $response->toArray();
 
         $this->assertResponseIsSuccessful();
@@ -21,64 +22,50 @@ class VariableTest extends ApiTestCase
         $this->assertMatchesResourceCollectionJsonSchema(Variable::class);
     }
 
-    public function testCreateAnon(): void
+    public function testCreateNotSuperAdmin(): void
     {
-        static::createClient()->request('POST', '/variables');
-        $this->assertResponseStatusCodeSame(401);
+        $client = self::authorization();
+        $client->request('POST', '/variables');
+
+        $this->assertResponseStatusCodeSame(403);
     }
 
     public function testCreateInvalid(): void
     {
-        static::createClient()->request('POST', '/variables', [
-            'headers' => self::authorization(),
-            'json' => []
-        ]);
+        $client = self::authorization(true);
+        $client->request('POST', '/variables', [ 'json' => [] ]);
+        
         $this->assertResponseStatusCodeSame(400);
     }
 
     public function testCreate(): void
     {
-        static::createClient()->request('POST', '/variables', [
-            'headers' => self::authorization(),
+        $client = self::authorization(true);
+        $client->request('POST', '/variables', [
             'json' => [
-                'nom' => 'Nom',
-                'description' => 'Description'
+                'nom' => 'TEST',
+                'description' => 'Une variable de test'
             ]
         ]);
-        $this->assertResponseIsSuccessful();
-        $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
-
-        $this->assertMatchesResourceItemJsonSchema(Variable::class);
-    }
-
-    public function testUpdateAnon(): void
-    {
-        static::createClient()->request('PUT', '/variables/1');
-        $this->assertResponseStatusCodeSame(401);
-    }
-
-    public function testUpdate(): void
-    {
-        static::createClient()->request('PUT', '/variables/1', [
-            'headers' => self::authorization(),
-            'json' => [ 'nom' => 'Updated' ]
-        ]);
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
         $this->assertMatchesResourceItemJsonSchema(Variable::class);
-        $this->assertJsonContains([ 'nom' => 'Updated' ]);
     }
-    /*
-    public function testDeleteAnon(): void
+
+    public function testDeleteNotSuperAdmin(): void
     {
-        static::createClient()->request('DELETE', '/variables/1');
-        $this->assertResponseStatusCodeSame(401);
+        $client = self::authorization();
+        $client->request('DELETE', '/variables/1');
+
+        $this->assertResponseStatusCodeSame(403);
     }
 
     public function testDelete(): void
     {
-        static::createClient()->request('DELETE', '/variables/1', [ 'headers' => self::authorization() ]);
+        $client = self::authorization(true);
+        $client->request('DELETE', '/variables/1');
+
         $this->assertResponseStatusCodeSame(204);
-    }*/
+    }
 }

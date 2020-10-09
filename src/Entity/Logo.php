@@ -18,6 +18,11 @@ use App\Controller\CreateLogoAction;
  *         "groups"={"logo:item:read"}
  *     },
  *     collectionOperations={
+ *         "get"={
+ *              "normalization_context"={
+ *                  "groups"={"logo:collection:read"}
+ *              }
+ *          },
  *         "post"={
  *             "controller"=CreateLogoAction::class,
  *             "deserialize"=false,
@@ -88,6 +93,13 @@ class Logo
      * @var File|null
      * 
      * @Assert\NotBlank(groups={"create"})
+     * @Assert\File(maxSize = "25k")
+     * @Assert\Image(
+     *      minWidth = 80,
+     *      maxWidth = 80,
+     *      minHeight = 80,
+     *      maxHeight = 80
+     * )
      * @Vich\UploadableField(mapping="media_object", fileNameProperty="filePath")
      */
     private $file;

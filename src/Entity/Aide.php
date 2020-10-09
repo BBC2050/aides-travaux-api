@@ -184,11 +184,11 @@ class Aide
      *      "aide:subresource:read",
      *      "simulation:item:read"
      * })
-     * @Assert\NotBlank
+     * @Assert\NotNull
      * @Assert\Type("bool")
      * @ORM\Column(type="boolean")
      */
-    private $active;
+    private $active = false;
 
     /**
      * @var Distributeur
@@ -212,7 +212,7 @@ class Aide
      * @var Collection|Offre[]
      * 
      * @Groups({"aide:item:read"})
-     * @ORM\OneToMany(targetEntity=Offre::class, mappedBy="aide")
+     * @ORM\OneToMany(targetEntity=Offre::class, mappedBy="aide", cascade={"persist", "remove"})
      */
     private $offres;
 
@@ -247,11 +247,7 @@ class Aide
      *      "aide:item:read",
      *      "aide:item:write"
      * })
-     * @ORM\ManyToMany(
-     *      targetEntity=Variable::class,
-     *      inversedBy="aides",
-     *      cascade={"persist", "remove"}
-     * )
+     * @ORM\ManyToMany(targetEntity=Variable::class, inversedBy="aides", cascade={"persist"})
      * @ORM\JoinTable(name="api_aide_variable")
      */
     private $variables;

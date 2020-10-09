@@ -106,16 +106,16 @@ class Offre
      *      "ouvrage:item:read",
      *      "simulation:item:read"
      * })
-     * @Assert\NotBlank
+     * @Assert\NotNull
      * @Assert\Type("bool")
      * @ORM\Column(type="boolean")
      */
-    private $active;
+    private $active = false;
 
     /**
      * @var Aide
      * 
-     * @Groups({"simulation:offre:item:read"})
+     * @Groups({"offre:item:write", "simulation:offre:item:read"})
      * @Assert\NotBlank
      * @ORM\ManyToOne(targetEntity=Aide::class, inversedBy="offres")
      * @ORM\JoinColumn(nullable=false)
@@ -125,6 +125,7 @@ class Offre
     /**
      * @var Ouvrage
      * 
+     * @Groups({"offre:item:write"})
      * @Assert\NotBlank
      * @ORM\ManyToOne(targetEntity=Ouvrage::class, inversedBy="offres")
      * @ORM\JoinColumn(nullable=false)
@@ -148,9 +149,9 @@ class Offre
      * @var Collection|Variable[]
      * 
      * @ORM\ManyToMany(
-     *      targetEntity=Variable::class, 
+     *      targetEntity=Variable::class,
      *      inversedBy="offres",
-     *      cascade={"persist", "remove"}
+     *      cascade={"persist"}
      * )
      * @ORM\JoinTable(name="api_offre_variable")
      */

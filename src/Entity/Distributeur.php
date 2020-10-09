@@ -23,6 +23,11 @@ use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
  *      itemOperations={"get"}
  * )
  * 
+ * ApiFilter(
+ *      SearchFilter::class,
+ *      properties={"nom": "partial"}
+ * )
+ * 
  * @ORM\Entity
  * @ORM\Table(name="api_distributeur")
  */

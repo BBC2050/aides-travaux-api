@@ -24,9 +24,6 @@ use ApiPlatform\Core\Annotation\ApiResource;
  *          },
  *          "post"={
  *              "security"="is_granted('ROLE_SUPER_ADMIN')",
- *              "denormalizationContext"={
- *                  "groups"={"utilisateur:item:create"}
- *              },
  *              "validationGroups"={"Default", "postValidation"}
  *          }
  *      },
@@ -63,7 +60,7 @@ class Utilisateur implements UserInterface
      * @Groups({
      *      "utilisateur:item:read",
      *      "utilisateur:collection:read",
-     *      "utilisateur:item:create"
+     *      "utilisateur:item:write"
      * })
      * @Assert\NotBlank
      * @Assert\Email(mode="loose")
@@ -78,7 +75,7 @@ class Utilisateur implements UserInterface
      * @Groups({
      *      "utilisateur:item:read",
      *      "utilisateur:collection:read",
-     *      "utilisateur:item:create"
+     *      "utilisateur:item:write"
      * })
      * @Assert\Type("array")
      * @ORM\Column(type="json")
@@ -95,10 +92,7 @@ class Utilisateur implements UserInterface
     /**
      * @var string
      * 
-     * @Groups({
-     *      "utilisateur:item:update",
-     *      "utilisateur:item:create"
-     * })
+     * @Groups({"utilisateur:item:write"})
      * @Assert\NotBlank(groups={"postValidation"})
      * @Assert\Type("string")
      * @Assert\Length(min=10, max=30)

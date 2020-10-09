@@ -27,13 +27,16 @@ use App\Repository\VariableRepository;
  *              }
  *          },
  *          "post"={
- *              "security"="is_granted('ROLE_ADMIN')"
+ *              "security"="is_granted('ROLE_SUPER_ADMIN')"
  *          }
  *      },
  *      itemOperations={
  *          "get",
  *          "put"={
- *              "security"="is_granted('ROLE_ADMIN')"
+ *              "security"="is_granted('ROLE_SUPER_ADMIN')"
+ *          },
+ *          "delete"={
+ *              "security"="is_granted('ROLE_SUPER_ADMIN')"
  *          }
  *      }
  * )

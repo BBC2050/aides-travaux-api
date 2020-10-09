@@ -154,7 +154,8 @@ class AideFixtures extends Fixture
                         ->setDescription('Action seule')
                         ->setExpression("object.countOuvragesEligibles('ECO_PTZ')->count() === 1")
                     )
-                    ->setValeur('15000');
+                    ->setDescription('Plafond')
+                    ->setExpression('15000');
                 $aide->addValeur($valeur);
 
                 $valeur = (new Valeur())
@@ -163,7 +164,8 @@ class AideFixtures extends Fixture
                         ->setDescription('Bouquet de 2 travaux')
                         ->setExpression("object.countOuvragesEligibles('ECO_PTZ')->count() === 2")
                     )
-                    ->setValeur('25000');
+                    ->setDescription('Plafond')
+                    ->setExpression('25000');
                 $aide->addValeur($valeur);
 
                 $valeur = (new Valeur())
@@ -172,34 +174,38 @@ class AideFixtures extends Fixture
                         ->setDescription('Bouquet de 3 travaux ou plus')
                         ->setExpression("object.countOuvragesEligibles('ECO_PTZ')->count() >= 3")
                     )
-                    ->setValeur('30000');
+                    ->setDescription('Plafond')
+                    ->setExpression('30000');
                 $aide->addValeur($valeur);
 
                 break;
             case 'MA_PRIME_RENOV':
                 $valeur = (new Valeur())
                     ->setType('plafond')
-                    ->setValeur('20000');
+                    ->setDescription('Plafond')
+                    ->setExpression('20000');
                 $aide->addValeur($valeur);
 
                 break;
             case 'ANAH_HABITER_MIEUX':
                 $valeur = (new Valeur())
                     ->setType('plafond')
+                    ->setDescription('Plafond')
                     ->addCondition((new Condition())
                         ->setDescription('Plafond pour les ménages modestes')
                         ->setExpression("object.getCodeCategorieRessource() === 'MODESTE'")
                     )
-                    ->setValeur('8600');
+                    ->setExpression('8600');
                 $aide->addValeur($valeur);
 
                 $valeur = (new Valeur())
                     ->setType('plafond')
+                    ->setDescription('Plafond')
                     ->addCondition((new Condition())
                         ->setDescription('Plafond pour les ménages très modestes')
                         ->setExpression("object.getCodeCategorieRessource() === 'TRES_MODESTE'")
                     )
-                    ->setValeur('12000');
+                    ->setExpression('12000');
                 $aide->addValeur($valeur);
 
                 break;
