@@ -11,6 +11,9 @@ use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
 
 /**
  * @ApiResource(
+ *      attributes={
+ *          "pagination_enabled"=false
+ *      },
  *      normalizationContext={},
  *      denormalizationContext={},
  *      collectionOperations={
@@ -39,8 +42,10 @@ class Distributeur
      * @Groups({
      *      "distributeur:collection:read",
      *      "aide:collection:read",
-     *      "aide:subresource:read"
+     *      "aide:subresource:read",
+     *      "simulation:item:read"
      * })
+     * 
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
@@ -48,6 +53,8 @@ class Distributeur
     private $id;
 
     /**
+     * Nom du distributeur
+     * 
      * @var string
      * 
      * @Groups({
@@ -58,14 +65,18 @@ class Distributeur
      *      "aide:subresource:read",
      *      "simulation:item:read"
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Type("string")
      * @Assert\Length(max=180)
+     * 
      * @ORM\Column(type="string", length=180)
      */
     private $nom;
 
     /**
+     * Périmètre d'intervention du distributeur
+     * 
      * @var string|null
      * 
      * @Groups({
@@ -73,11 +84,14 @@ class Distributeur
      *      "aide:item:read",
      *      "aide:collection:read",
      *      "aide:item:write",
-     *      "aide:subresource:read"
+     *      "aide:subresource:read",
+     *      "simulation:item:read"
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Type("string")
      * @Assert\Length(max=180)
+     * 
      * @ORM\Column(type="string", length=180)
      */
     private $perimetre = 'FR';
@@ -106,7 +120,7 @@ class Distributeur
 
     public function setPerimetre(?string $perimetre): self
     {
-        $this->perimetre = $perimetre ? $perimetre : 'FR';
+        $this->perimetre = $perimetre;
 
         return $this;
     }

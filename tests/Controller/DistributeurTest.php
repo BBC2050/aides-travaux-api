@@ -14,15 +14,14 @@ class DistributeurTest extends ApiTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
-        $this->assertCount(5, $data['hydra:member']);
-        $this->assertEquals(5, $data['hydra:totalItems']);
+        $this->assertCount(3, $data['hydra:member']);
+        $this->assertEquals(3, $data['hydra:totalItems']);
         $this->assertMatchesResourceCollectionJsonSchema(Distributeur::class);
     }
 
     public function testGet(): void
     {
         $response = static::createClient()->request('GET', '/distributeurs/1');
-        $data = $response->toArray();
 
         $this->assertResponseIsSuccessful();
         $this->assertMatchesResourceItemJsonSchema(Distributeur::class);

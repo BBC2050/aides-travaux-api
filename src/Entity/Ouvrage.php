@@ -9,11 +9,14 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Core\Annotation\ApiResource;
-use App\Repository\OuvrageRepository;
-use App\Model\Ouvrage as Simulation;
+use ApiPlatform\Core\Annotation\ApiFilter;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
 
 /**
  * @ApiResource(
+ *      attributes={
+ *          "pagination_enabled"=false
+ *      },
  *      normalizationContext={
  *          "groups"={"ouvrage:item:read"}
  *      },
@@ -41,8 +44,14 @@ use App\Model\Ouvrage as Simulation;
  *      }
  * )
  * 
+ * @ApiFilter(
+ *      SearchFilter::class,
+ *      properties={"categorie": "exact", "categorie.nom": "partial", "offres.aide.id": "partial"}
+ * )
+ * 
  * @UniqueEntity(fields={"code"})
- * @ORM\Entity(repositoryClass=OuvrageRepository::class)
+ * 
+ * @ORM\Entity
  * @ORM\Table(name="api_ouvrage")
  */
 class Ouvrage
@@ -53,9 +62,9 @@ class Ouvrage
      * @Groups({
      *      "ouvrage:item:read",
      *      "ouvrage:collection:read",
-     *      "offre:item:read",
      *      "simulation:item:read"
      * })
+     * 
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
@@ -63,52 +72,71 @@ class Ouvrage
     private $id;
 
     /**
+     * Code unique de l'ouvrage
+     * 
      * @var string
      * 
      * @Groups({
      *      "ouvrage:item:read",
-     *      "ouvrage:collection:read",
      *      "ouvrage:item:write",
+     *      "ouvrage:collection:read",
      *      "simulation:item:read"
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Type("string")
      * @Assert\Length(max=180)
+     * 
      * @ORM\Column(type="string", length=180)
      */
     private $code;
 
     /**
+     * Nom de l'ouvrage
+     * 
      * @var string
      * 
      * @Groups({
      *      "ouvrage:item:read",
-     *      "ouvrage:collection:read",
      *      "ouvrage:item:write",
+     *      "ouvrage:collection:read",
      *      "simulation:item:read"
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Type("string")
      * @Assert\Length(max=180)
+     * 
      * @ORM\Column(type="string", length=180)
      */
     private $nom;
 
     /**
-     * @var Collection|Offre[]
+     * Catégorie
+     * 
+     * @var OuvrageCategorie
      * 
      * @Groups({
      *      "ouvrage:item:read",
+     *      "ouvrage:item:write",
+     *      "ouvrage:collection:read",
      *      "simulation:item:read"
      * })
-     * @ORM\OneToMany(targetEntity=Offre::class, mappedBy="ouvrage", cascade={"persist", "remove"})
+     * 
+     * @Assert\NotBlank
+     * 
+     * @ORM\ManyToOne(targetEntity=OuvrageCategorie::class)
      */
-    private $offres;
+    private $categorie;
 
     /**
-     * @var Simulation|null
+     * @var Collection|Offre[]
+     * 
+     * @Groups({"ouvrage:item:read"})
+     * 
+     * @ORM\ManyToMany(targetEntity=Offre::class, mappedBy="ouvrages")
      */
-    private $simulation;
+    private $offres;
 
     public function __construct()
     {
@@ -125,7 +153,7 @@ class Ouvrage
         return $this->code;
     }
 
-    public function setCode(string $code): self
+    public function setCode(?string $code): self
     {
         $this->code = $code;
 
@@ -137,23 +165,43 @@ class Ouvrage
         return $this->nom;
     }
 
-    public function setNom(string $nom): self
+    public function setNom(?string $nom): self
     {
         $this->nom = $nom;
 
         return $this;
     }
 
+    public function getCategorie(): ?OuvrageCategorie
+    {
+        return $this->categorie;
+    }
+
+    public function setCategorie(?OuvrageCategorie $categorie): self
+    {
+        $this->categorie = $categorie;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Offre[]
+     */
     public function getOffres(): Collection
     {
         return $this->offres;
+    }
+
+    public function toArrayOffres(): array
+    {
+        return $this->offres->toArray();
     }
 
     public function addOffre(Offre $offre): self
     {
         if (!$this->offres->contains($offre)) {
             $this->offres[] = $offre;
-            $offre->setOuvrage($this);
+            $offre->addOuvrage($this);
         }
 
         return $this;
@@ -163,23 +211,8 @@ class Ouvrage
     {
         if ($this->offres->contains($offre)) {
             $this->offres->removeElement($offre);
-            // set the owning side to null (unless already changed)
-            if ($offre->getOuvrage() === $this) {
-                $offre->setOuvrage(null);
-            }
+            $offre->removeOuvrage($this);
         }
-
-        return $this;
-    }
-
-    public function getSimulation(): ?Simulation 
-    {
-        return $this->simulation;
-    }
-
-    public function setSimulation(?Simulation $simulation): self
-    {
-        $this->simulation = $simulation;
 
         return $this;
     }

@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -17,63 +19,60 @@ class Condition
      * 
      * @Groups({
      *      "aide:item:read",
-     *      "simulation:item:read"
+     *      "offre:item:read"
      * })
+     * 
      * @ORM\Id()
      * @ORM\GeneratedValue()
+     * 
      * @ORM\Column(type="integer")
      */
     private $id;
 
     /**
+     * Description de la condition
+     * 
      * @var string
      * 
      * @Groups({ 
      *      "aide:item:read", 
      *      "aide:item:write",
+     *      "offre:item:read",
+     *      "offre:item:write",
      *      "simulation:item:read"
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Type("string")
      * @Assert\Length(max=180)
+     * 
      * @ORM\Column(type="string", length=180)
      */
     private $description;
 
     /**
-     * @var string
+     * Liste des expressions validant la condition
+     * 
+     * @var Collection|Expression[]
      * 
      * @Groups({ 
      *      "aide:item:read", 
      *      "aide:item:write",
-     *      "simulation:item:read"
+     *      "offre:item:read",
+     *      "offre:item:write"
      * })
-     * @Assert\NotBlank(groups={"postValidation"})
-     * @Assert\Type("string")
-     * @Assert\Length(max=180)
-     * @ORM\Column(type="string", length=180, nullable=true)
-     */
-    private $groupe;
-
-    /**
-     * @var string
      * 
-     * @Groups({
-     *      "aide:item:read", 
-     *      "aide:item:write",
-     *      "simulation:item:read"
-     * })
-     * @Assert\ExpressionLanguageSyntax()
-     * @ORM\Column(type="string", length=255)
-     */
-    private $expression = "null";
-
-    /**
-     * @var bool|null
+     * @Assert\Valid
      * 
-     * @Groups({"simulation:item:read"})
+     * @ORM\ManyToMany(targetEntity=Expression::class, cascade={"persist", "remove"})
+     * @ORM\JoinTable(name="api_condition_expression")
      */
-    private $response;
+    private $expressions;
+
+    public function __construct()
+    {
+        $this->expressions = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -92,40 +91,50 @@ class Condition
         return $this;
     }
 
-    public function getGroupe(): ?string
+    /**
+     * @return Collection|Expression[]
+     */
+    public function getExpressions(): Collection
     {
-        return $this->groupe;
+        return $this->expressions;
     }
 
-    public function setGroupe(?string $groupe): self
+    public function toArrayExpressions(): array
     {
-        $this->groupe = $groupe;
+        return $this->expressions->toArray();
+    }
+
+    public function addExpression(Expression $expression): self
+    {
+        if (!$this->expressions->contains($expression)) {
+            $this->expressions[] = $expression;
+        }
 
         return $this;
     }
 
-    public function getExpression(): ?string
+    public function removeExpression(Expression $expression): self
     {
-        return $this->expression;
-    }
-
-    public function setExpression(?string $expression): self
-    {
-        $this->expression = $expression;
+        if ($this->expressions->contains($expression)) {
+            $this->expressions->removeElement($expression);
+        }
 
         return $this;
     }
 
-    public function getResponse(): ?bool
+    /**
+     * @Groups({"simulation:item:read"})
+     */
+    public function isValide(): ?bool
     {
-        return $this->response;
+        if ($this->expressions->count() === 0) {
+            return null;
+        }
+        foreach ($this->expressions as $expression) {
+            if ($expression->getResponse() === true) {
+                return true;
+            }
+        }
+        return false;
     }
-
-    public function setResponse(?bool $response): self
-    {
-        $this->response = $response;
-
-        return $this;
-    }
-    
 }

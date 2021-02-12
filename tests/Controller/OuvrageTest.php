@@ -16,8 +16,8 @@ class OuvrageTest extends ApiTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
-        $this->assertCount(2, $data['hydra:member']);
-        $this->assertEquals(2, $data['hydra:totalItems']);
+        $this->assertCount(30, $data['hydra:member']);
+        $this->assertEquals(62, $data['hydra:totalItems']);
         $this->assertMatchesResourceCollectionJsonSchema(Ouvrage::class);
     }
 
@@ -41,7 +41,8 @@ class OuvrageTest extends ApiTestCase
         $client->request('POST', '/ouvrages', [
             'json' => [
                 'code' => 'Code',
-                'nom' => 'Doe'
+                'nom' => 'Doe',
+                'categorie' => '/ouvrage_categories/1'
             ]
         ]);
 

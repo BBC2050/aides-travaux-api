@@ -53,6 +53,7 @@ use App\Controller\CreateLogoAction;
  * @Vich\Uploadable
  * 
  * @ORM\Entity
+ * @ORM\Table(name="api_logo")
  */
 class Logo
 {
@@ -81,6 +82,7 @@ class Logo
      * @var string|null
      * 
      * @ApiProperty(iri="http://schema.org/contentUrl")
+     * 
      * @Groups({
      *      "logo:item:read",
      *      "aide:item:read",
@@ -100,6 +102,7 @@ class Logo
      *      minHeight = 80,
      *      maxHeight = 80
      * )
+     * 
      * @Vich\UploadableField(mapping="media_object", fileNameProperty="filePath")
      */
     private $file;

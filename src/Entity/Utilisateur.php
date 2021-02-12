@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -31,15 +30,19 @@ use ApiPlatform\Core\Annotation\ApiResource;
  *          "get"={
  *              "security"="is_granted('ROLE_SUPER_ADMIN') or (is_granted('ROLE_ADMIN') and user.id === object.id)"
  *          },
+ *          "put"={
+ *              "security"="is_granted('ROLE_SUPER_ADMIN') or (is_granted('ROLE_ADMIN') and user.id === object.id)"
+ *          },
  *          "delete"={
  *              "security"="is_granted('ROLE_SUPER_ADMIN')"
  *          }
  *      }
  * )
  * 
- * @ORM\Entity(repositoryClass=UtilisateurRepository::class)
- * @ORM\HasLifecycleCallbacks
  * @UniqueEntity(fields={"email"})
+ * 
+ * @ORM\Entity
+ * @ORM\HasLifecycleCallbacks
  * @ORM\Table(name="api_utilisateur")
  */
 class Utilisateur implements UserInterface
@@ -48,6 +51,7 @@ class Utilisateur implements UserInterface
      * @var int
      * 
      * @Groups({"utilisateur:item:read"})
+     * 
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
@@ -55,6 +59,8 @@ class Utilisateur implements UserInterface
     private $id;
 
     /**
+     * Email de l'utilisateur
+     * 
      * @var string
      * 
      * @Groups({
@@ -62,14 +68,18 @@ class Utilisateur implements UserInterface
      *      "utilisateur:collection:read",
      *      "utilisateur:item:write"
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Email(mode="loose")
      * @Assert\Length(max=180)
+     * 
      * @ORM\Column(type="string", length=180, unique=true)
      */
     private $email;
 
     /**
+     * Liste des rôles
+     * 
      * @var array
      * 
      * @Groups({
@@ -77,12 +87,16 @@ class Utilisateur implements UserInterface
      *      "utilisateur:collection:read",
      *      "utilisateur:item:write"
      * })
+     * 
      * @Assert\Type("array")
+     * 
      * @ORM\Column(type="json")
      */
     private $roles = [];
 
     /**
+     * Mot de passe encodé
+     * 
      * @var string
      * 
      * @ORM\Column(type="string")
@@ -90,9 +104,12 @@ class Utilisateur implements UserInterface
     private $password;
 
     /**
+     * Mot de passe non encodé
+     * 
      * @var string
      * 
      * @Groups({"utilisateur:item:write"})
+     * 
      * @Assert\NotBlank(groups={"postValidation"})
      * @Assert\Type("string")
      * @Assert\Length(min=10, max=30)
@@ -109,7 +126,7 @@ class Utilisateur implements UserInterface
         return $this->email;
     }
 
-    public function setEmail(string $email): self
+    public function setEmail(?string $email): self
     {
         $this->email = $email;
 
@@ -138,7 +155,7 @@ class Utilisateur implements UserInterface
         return array_unique($roles);
     }
 
-    public function setRoles(array $roles): self
+    public function setRoles(?array $roles): self
     {
         $this->roles = $roles;
 

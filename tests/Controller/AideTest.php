@@ -16,8 +16,8 @@ class AideTest extends ApiTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
-        $this->assertCount(5, $data['hydra:member']);
-        $this->assertEquals(5, $data['hydra:totalItems']);
+        $this->assertCount(9, $data['hydra:member']);
+        $this->assertEquals(9, $data['hydra:totalItems']);
         $this->assertMatchesResourceCollectionJsonSchema(Aide::class);
     }
 
@@ -43,6 +43,7 @@ class AideTest extends ApiTestCase
                 'code' => 'M',
                 'nom' => 'Doe',
                 'description' => 'John',
+                'information' => 'https://test.com',
                 'type' => 'prime',
                 'delai' => '75000',
                 'active' => false,

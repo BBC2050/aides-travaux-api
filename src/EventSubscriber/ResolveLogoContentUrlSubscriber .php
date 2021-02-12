@@ -11,7 +11,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 use Vich\UploaderBundle\Storage\StorageInterface;
 use App\Entity\Logo;
 
-class ResolveLogoContentUrlSubscriber implements EventSubscriberInterface
+final class ResolveLogoContentUrlSubscriber implements EventSubscriberInterface
 {
     private $storage;
 

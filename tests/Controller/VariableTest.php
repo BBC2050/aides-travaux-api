@@ -17,17 +17,15 @@ class VariableTest extends ApiTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
-        $this->assertCount(16, $data['hydra:member']);
-        $this->assertEquals(16, $data['hydra:totalItems']);
+        $this->assertCount(37, $data['hydra:member']);
+        $this->assertEquals(37, $data['hydra:totalItems']);
         $this->assertMatchesResourceCollectionJsonSchema(Variable::class);
     }
 
-    public function testCreateNotSuperAdmin(): void
+    public function testCreateAnon(): void
     {
-        $client = self::authorization();
-        $client->request('POST', '/variables');
-
-        $this->assertResponseStatusCodeSame(403);
+        $response = static::createClient()->request('POST', '/variables');
+        $this->assertResponseStatusCodeSame(401);
     }
 
     public function testCreateInvalid(): void
@@ -44,7 +42,8 @@ class VariableTest extends ApiTestCase
         $client->request('POST', '/variables', [
             'json' => [
                 'nom' => 'TEST',
-                'description' => 'Une variable de test'
+                'description' => 'Une variable de test',
+                'type' => 'int'
             ]
         ]);
 

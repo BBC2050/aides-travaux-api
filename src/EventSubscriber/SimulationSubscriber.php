@@ -8,9 +8,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
-use App\Entity\Aide;
-use App\Entity\Ouvrage;
-use App\Model\Simulation;
+use App\Entity\Offre;
+use App\Entity\Simulation;
+use App\Resolver\ExpressionResolver;
 
 final class SimulationSubscriber implements EventSubscriberInterface
 {
@@ -28,13 +28,13 @@ final class SimulationSubscriber implements EventSubscriberInterface
     {
         return [
             KernelEvents::VIEW => [
-                [ 'fetchOuvrages', EventPriorities::POST_WRITE ],
-                [ 'run', EventPriorities::POST_WRITE ]
+                [ 'fetchOffres', EventPriorities::POST_WRITE ],
+                [ 'resolve', EventPriorities::POST_WRITE ]
             ]
         ];
     }
 
-    public function fetchOuvrages(ViewEvent $event): void
+    public function fetchOffres(ViewEvent $event): void
     {
         $simulation = $event->getControllerResult();
         $method = $event->getRequest()->getMethod();
@@ -42,20 +42,34 @@ final class SimulationSubscriber implements EventSubscriberInterface
         if (!$simulation instanceof Simulation || Request::METHOD_POST !== $method) {
             return;
         }
+        /** @var \App\Repository\OffreRepository */
+        $repository = $this->em->getRepository(Offre::class);
 
-        $aides = $simulation->getAides()->map(function($aide) {
-            return $aide->getId();
-        });
+        /** @var array offres disponibles */
+        $offres = $repository->findByOuvragesAndAides(
+            $simulation->getOuvrages()->map(function($ouvrage) {
+                return $ouvrage->getOuvrage()->getId();
+            })->toArray(),
+            $simulation->getAides()->map(function($aide) {
+                return $aide->getAide()->getId();
+            })->toArray()
+        );
 
-        foreach ($simulation->getOuvrages() as $ouvrage) {
-            $ressource = $this->em->getRepository(Ouvrage::class)->findOneByAides(
-                $ouvrage->getId(), $aides->getValues()
-            );
-            $ouvrage->setRessource($ressource);
+        foreach ($offres as $offre) {
+            /** @var array IDs des ouvrages éligibles à l'offre */
+            $ouvrages = $offre->getOuvrages()->map(function($ouvrage) {
+                return $ouvrage->getId();
+            })->toArray();
+
+            foreach ($simulation->getOuvrages() as $ouvrage) {
+                if (\in_array($ouvrage->getOuvrage()->getId(), $ouvrages)) {
+                    $ouvrage->addOffre($offre);
+                }
+            }
         }
     }
 
-    public function run(ViewEvent $event): void
+    public function resolve(ViewEvent $event): void
     {
         $simulation = $event->getControllerResult();
         $method = $event->getRequest()->getMethod();
@@ -64,18 +78,47 @@ final class SimulationSubscriber implements EventSubscriberInterface
             return;
         }
 
-        foreach ($simulation->getAides() as $aide) {
-            $aide->resolveConditions();
-            $aide->resolveValeursConditions();
-            $aide->resolveValeurs();
-        }
         foreach ($simulation->getOuvrages() as $ouvrage) {
-            foreach ($ouvrage->getRessource()->getOffres() as $offre) {
-                $offre->resolveConditions();
-                $offre->resolveValeursConditions();
-                $offre->resolveValeurs();
+            foreach ($ouvrage->getOffres() as $offre) {
+                // Résolution des conditions propres à l'offre
+                foreach ($offre->getConditions() as $condition) {
+                    foreach ($condition->getExpressions() as $expression) {
+                        ExpressionResolver::resolve($expression, $offre);
+                    }
+                }
+                // Résolution des valeurs propres à l'offre
+                foreach ($offre->getValeurs() as $valeur) {
+                    ExpressionResolver::resolve($valeur->getExpression(), $offre);
+
+                    foreach ($valeur->getConditions() as $condition) {
+                        foreach ($condition->getExpressions() as $expression) {
+                            ExpressionResolver::resolve($expression, $offre);
+                        }
+                    }
+                }
+                // Résolution des conditions propres à l'aide
+                foreach ($offre->getAide()->getConditions() as $condition) {
+                    foreach ($condition->getExpressions() as $expression) {
+                        if ($expression->getResponse() === null) {
+                            ExpressionResolver::resolve($expression, $offre);
+                        }
+                    }
+                }
+                // Résolution des valeurs propres à l'aide
+                foreach ($offre->getAide()->getValeurs() as $valeur) {
+                    if ($valeur->getExpression()->getResponse() === null) {
+                        ExpressionResolver::resolve($valeur->getExpression(), $offre);
+                    }
+                    
+                    foreach ($valeur->getConditions() as $condition) {
+                        foreach ($condition->getExpressions() as $expression) {
+                            if ($expression->getResponse() === null) {
+                                ExpressionResolver::resolve($expression, $offre);
+                            }
+                        }
+                    }
+                }
             }
         }
-        dump($simulation);
     }
 }

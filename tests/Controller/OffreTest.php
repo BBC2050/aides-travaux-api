@@ -16,8 +16,8 @@ class OffreTest extends ApiTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
-        $this->assertCount(9, $data['hydra:member']);
-        $this->assertEquals(9, $data['hydra:totalItems']);
+        $this->assertCount(30, $data['hydra:member']);
+        $this->assertEquals(124, $data['hydra:totalItems']);
         $this->assertMatchesResourceCollectionJsonSchema(Offre::class);
     }
 
@@ -40,7 +40,7 @@ class OffreTest extends ApiTestCase
         $client = self::authorization();
         $client->request('POST', '/offres', [
             'json' => [
-                'nom' => 'Doe',
+                'nom' => 'Offre',
                 'active' => false,
                 'aide' => '/aides/1',
                 'ouvrage' => '/ouvrages/1'

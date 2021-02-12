@@ -13,8 +13,6 @@ use ApiPlatform\Core\Annotation\ApiSubresource;
 use ApiPlatform\Core\Annotation\ApiProperty;
 use ApiPlatform\Core\Annotation\ApiFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
-use App\Model\Simulation;
-use App\Repository\AideRepository;
 
 /**
  * @ApiResource(
@@ -55,35 +53,25 @@ use App\Repository\AideRepository;
  * 
  * @ApiFilter(
  *      SearchFilter::class,
- *      properties={"nom": "partial"}
- * )
- * @ApiFilter(
- *      SearchFilter::class,
- *      properties={
- *          "distributeur.nom": "exact",
- *          "distributeur.perimetre": "exact"
- *      }
+ *      properties={"nom": "partial", "distributeur.nom": "exact", "distributeur.perimetre": "exact"}
  * )
  * 
  * @UniqueEntity(fields={"code"})
- * @ORM\Entity(repositoryClass=AideRepository::class)
+ * 
+ * @ORM\Entity
  * @ORM\Table(name="api_aide")
  */
 class Aide
 {
-    use \App\Traits\AideTrait;
-    use \App\Traits\HasConditionsTrait;
-    use \App\Traits\HasValeursTrait;
-
     /**
      * @var int
      * 
      * @Groups({
      *      "aide:collection:read",
      *      "aide:subresource:read",
-     *      "simulation:item:read",
-     *      "simulation:offre:item:read"
+     *      "simulation:item:read"
      * })
+     * 
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
@@ -91,6 +79,8 @@ class Aide
     private $id;
 
     /**
+     * Code d'identification de l'aide
+     * 
      * @var string
      * 
      * @Groups({
@@ -100,14 +90,18 @@ class Aide
      *      "aide:subresource:read",
      *      "simulation:item:read"
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Type("string")
      * @Assert\Length(max=180)
+     * 
      * @ORM\Column(type="string", length=180)
      */
     private $code;
 
     /**
+     * Nom de l'aide financière
+     * 
      * @var string
      * 
      * @Groups({
@@ -117,14 +111,18 @@ class Aide
      *      "aide:subresource:read",
      *      "simulation:item:read"
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Type("string")
      * @Assert\Length(max=180)
+     * 
      * @ORM\Column(type="string", length=180)
      */
     private $nom;
 
     /**
+     * Description de l'aide financière
+     * 
      * @var string
      * 
      * @Groups({
@@ -134,14 +132,20 @@ class Aide
      *      "aide:subresource:read",
      *      "simulation:item:read"
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Type("string")
      * @Assert\Length(max=180)
+     * 
      * @ORM\Column(type="string", length=180)
      */
     private $description;
 
     /**
+     * Type de l'aide financière
+     * - prime
+     * - avance
+     * 
      * @var string
      * 
      * @Groups({
@@ -151,13 +155,17 @@ class Aide
      *      "aide:subresource:read",
      *      "simulation:item:read"
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Choice(choices=Aide::TYPES)
+     * 
      * @ORM\Column(type="string", length=180)
      */
     private $type;
 
     /**
+     * Délai de versement de l'aide
+     * 
      * @var string
      * 
      * @Groups({
@@ -167,14 +175,55 @@ class Aide
      *      "aide:subresource:read",
      *      "simulation:item:read"
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Type("string")
      * @Assert\Length(max=180)
+     * 
      * @ORM\Column(type="string", length=180)
      */
     private $delai;
 
     /**
+     * Ressources externes
+     * 
+     * @var array|null
+     * 
+     * @Groups({
+     *      "aide:item:read",
+     *      "aide:collection:read",
+     *      "aide:item:write",
+     *      "aide:subresource:read",
+     *      "simulation:item:read"
+     * })
+     * 
+     * @Assert\Type("array")
+     * @Assert\All({
+     *      @Assert\NotBlank,
+     *      @Assert\Type("array"),
+     *      @Assert\Collection(
+     *          fields = {
+     *              "texte" = {
+     *                  @Assert\NotBlank,
+     *                  @Assert\Type("string"),
+     *                  @Assert\Length(max = 100)
+     *              },
+     *              "url" = {
+     *                  @Assert\NotBlank,
+     *                  @Assert\Url,
+     *              }
+     *          },
+     *          allowMissingFields = false
+     *      )
+     * })
+     * 
+     * @ORM\Column(type="array", nullable=true)
+     */
+    private $ressources = [];
+
+    /**
+     * Statut de l'aide
+     * 
      * @var bool
      * 
      * @Groups({
@@ -184,13 +233,17 @@ class Aide
      *      "aide:subresource:read",
      *      "simulation:item:read"
      * })
+     * 
      * @Assert\NotNull
      * @Assert\Type("bool")
+     * 
      * @ORM\Column(type="boolean")
      */
     private $active = false;
 
     /**
+     * Distributeur de l'aide
+     * 
      * @var Distributeur
      * 
      * @Groups({
@@ -200,7 +253,9 @@ class Aide
      *      "aide:subresource:read",
      *      "simulation:item:read"
      * })
+     * 
      * @Assert\NotBlank
+     * 
      * @ORM\ManyToOne(
      *      targetEntity=Distributeur::class,
      *      cascade={"persist"}
@@ -209,66 +264,8 @@ class Aide
     private $distributeur;
 
     /**
-     * @var Collection|Offre[]
+     * Logo de l'aide
      * 
-     * @Groups({"aide:item:read"})
-     * @ORM\OneToMany(targetEntity=Offre::class, mappedBy="aide", cascade={"persist", "remove"})
-     */
-    private $offres;
-
-    /**
-     * @var Collection|Valeur[]
-     * 
-     * @Groups({
-     *      "aide:item:read",
-     *      "aide:item:write"
-     * })
-     * @ORM\ManyToMany(targetEntity=Valeur::class, orphanRemoval=true, cascade={"persist", "remove"})
-     * @ORM\JoinTable(name="api_aide_valeur")
-     */
-    private $valeurs;
-
-    /**
-     * @var Collection|Condition[]
-     * 
-     * @Groups({
-     *      "aide:item:read",
-     *      "aide:item:write"
-     * })
-     * @ORM\ManyToMany(targetEntity=Condition::class, cascade={"persist", "remove"})
-     * @ORM\JoinTable(name="api_aide_condition")
-     */
-    private $conditions;
-
-    /**
-     * @var Collection|Variable[]
-     * 
-     * @Groups({
-     *      "aide:item:read",
-     *      "aide:item:write"
-     * })
-     * @ORM\ManyToMany(targetEntity=Variable::class, inversedBy="aides", cascade={"persist"})
-     * @ORM\JoinTable(name="api_aide_variable")
-     */
-    private $variables;
-
-    /**
-     * @var Collection|Aide[]
-     * 
-     * @Groups({"aide:item:read", "simulation:item:read"})
-     * @ApiSubresource
-     * @ApiProperty(readableLink=false, writableLink=false)
-     * @ORM\ManyToMany(targetEntity=Aide::class)
-     * @ORM\JoinTable(name="api_aide_aide")
-     */
-    private $aidesCumulables;
-
-    /**
-     * @var Simulation|null
-     */
-    private $simulation;
-
-    /**
      * @var Logo|null
      * 
      * @Groups({
@@ -278,9 +275,79 @@ class Aide
      *      "aide:subresource:read",
      *      "simulation:item:read"
      * })
-     * @ORM\OneToOne(targetEntity=Logo::class, cascade={"persist", "remove"})
+     * 
+     * @ORM\OneToOne(targetEntity=Logo::class)
      */
     private $logo;
+
+    /**
+     * Liste des offres
+     * 
+     * @var Collection|Offre[]
+     * 
+     * @Groups({"aide:item:read"})
+     * 
+     * @ORM\OneToMany(targetEntity=Offre::class, mappedBy="aide", cascade={"persist", "remove"})
+     */
+    private $offres;
+
+    /**
+     * Liste des valeurs
+     * 
+     * @var Collection|Valeur[]
+     * 
+     * @Groups({
+     *      "aide:item:read",
+     *      "aide:item:write"
+     * })
+     * 
+     * @ORM\ManyToMany(targetEntity=Valeur::class, orphanRemoval=true, cascade={"persist", "remove"})
+     * @ORM\JoinTable(name="api_aide_valeur")
+     */
+    private $valeurs;
+
+    /**
+     * Liste des conditions
+     * 
+     * @var Collection|Condition[]
+     * 
+     * @Groups({
+     *      "aide:item:read",
+     *      "aide:item:write",
+     *      "simulation:item:read"
+     * })
+     * 
+     * @ORM\ManyToMany(targetEntity=Condition::class, cascade={"persist", "remove"})
+     * @ORM\JoinTable(name="api_aide_condition")
+     */
+    private $conditions;
+
+    /**
+     * Liste des variables
+     * 
+     * @var Collection|Variable[]
+     * 
+     * @Groups({"aide:item:read", "aide:collection:read"})
+     * 
+     * @ORM\ManyToMany(targetEntity=Variable::class)
+     * @ORM\JoinTable(name="api_aide_variable")
+     */
+    private $variables;
+
+    /**
+     * Liste des aides cumulables
+     * 
+     * @var Collection|Aide[]
+     * 
+     * @Groups({"aide:item:read"})
+     * 
+     * @ApiSubresource
+     * @ApiProperty(readableLink=false, writableLink=false)
+     * 
+     * @ORM\ManyToMany(targetEntity=Aide::class)
+     * @ORM\JoinTable(name="api_aide_aide")
+     */
+    private $aidesCumulables;
 
     /**
      * @var array
@@ -292,8 +359,8 @@ class Aide
         $this->offres = new ArrayCollection();
         $this->valeurs = new ArrayCollection();
         $this->conditions = new ArrayCollection();
-        $this->variables = new ArrayCollection();
         $this->aidesCumulables = new ArrayCollection();
+        $this->variables = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -361,6 +428,18 @@ class Aide
         return $this;
     }
 
+    public function getRessources(): ?array
+    {
+        return $this->ressources;
+    }
+
+    public function setRessources(?array $ressources): self
+    {
+        $this->ressources = $ressources;
+
+        return $this;
+    }
+
     public function isActive(): ?bool
     {
         return $this->active;
@@ -385,9 +464,29 @@ class Aide
         return $this;
     }
 
+    public function getLogo(): ?Logo
+    {
+        return $this->logo;
+    }
+
+    public function setLogo(?Logo $logo): self
+    {
+        $this->logo = $logo;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Offre[]
+     */
     public function getOffres(): Collection
     {
         return $this->offres;
+    }
+
+    public function toArrayOffres(): array
+    {
+        return $this->offres->toArray();
     }
 
     public function addOffre(Offre $offre): self
@@ -412,9 +511,17 @@ class Aide
         return $this;
     }
 
+    /**
+     * @return Collection|Valeur[]
+     */
     public function getValeurs(): Collection
     {
         return $this->valeurs;
+    }
+
+    public function toArrayValeurs(): array
+    {
+        return $this->valeurs->toArray();
     }
 
     public function addValeur(Valeur $valeur): self
@@ -443,9 +550,9 @@ class Aide
         return $this->conditions;
     }
 
-    public function toArrayConditions(): Collection
+    public function toArrayConditions(): array
     {
-        return $this->conditions;
+        return $this->conditions->toArray();
     }
 
     public function addCondition(Condition $condition): self
@@ -466,9 +573,17 @@ class Aide
         return $this;
     }
 
+    /**
+     * @return Collection|Variable[]
+     */
     public function getVariables(): Collection
     {
         return $this->variables;
+    }
+
+    public function toArrayVariables(): array
+    {
+        return $this->variables->getValues();
     }
 
     public function addVariable(Variable $variable): self
@@ -497,7 +612,7 @@ class Aide
         return $this->aidesCumulables;
     }
 
-    public function toArrayAidesCumulabless(): array
+    public function toArrayAidesCumulables(): array
     {
         return $this->aidesCumulables->getValues();
     }
@@ -516,30 +631,6 @@ class Aide
         if ($this->aidesCumulables->contains($aide)) {
             $this->aidesCumulables->removeElement($aide);
         }
-
-        return $this;
-    }
-
-    public function getLogo(): ?Logo
-    {
-        return $this->logo;
-    }
-
-    public function setLogo(?Logo $logo): self
-    {
-        $this->logo = $logo;
-
-        return $this;
-    }
-
-    public function getSimulation(): ?Simulation 
-    {
-        return $this->simulation;
-    }
-
-    public function setSimulation(?Simulation $simulation): self
-    {
-        $this->simulation = $simulation;
 
         return $this;
     }

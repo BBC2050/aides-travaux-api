@@ -10,10 +10,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Core\Annotation\ApiResource;
 use ApiPlatform\Core\Annotation\ApiFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
-use App\Repository\VariableRepository;
 
 /**
  * @ApiResource(
+ *      attributes={
+ *          "pagination_enabled"=false
+ *      },
  *      normalizationContext={
  *          "groups"={"variable:item:read"}
  *      },
@@ -27,13 +29,13 @@ use App\Repository\VariableRepository;
  *              }
  *          },
  *          "post"={
- *              "security"="is_granted('ROLE_SUPER_ADMIN')"
+ *              "security"="is_granted('ROLE_ADMIN')"
  *          }
  *      },
  *      itemOperations={
  *          "get",
  *          "put"={
- *              "security"="is_granted('ROLE_SUPER_ADMIN')"
+ *              "security"="is_granted('ROLE_ADMIN')"
  *          },
  *          "delete"={
  *              "security"="is_granted('ROLE_SUPER_ADMIN')"
@@ -43,14 +45,10 @@ use App\Repository\VariableRepository;
  * 
  * @ApiFilter(
  *      SearchFilter::class,
- *      properties={
- *          "aides.id": "exact",
- *          "offres.aide": "exact",
- *          "offres.ouvrage": "exact"
- *      }
+ *      properties={"nom": "partial", "type": "exact"}
  * )
  * 
- * @ORM\Entity(repositoryClass=VariableRepository::class)
+ * @ORM\Entity
  * @ORM\Table(name="api_variable")
  */
 class Variable
@@ -59,66 +57,127 @@ class Variable
      * @var int
      * 
      * @Groups({
-     *      "variable:item:read",
      *      "variable:collection:read",
-     *      "aide:item:read"
+     *      "aide:item:read",
+     *      "aide:collection:read",
+     *      "offre:item:read",
+     *      "offre:collection:read"
      * })
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
+     * 
+     * @ORM\Id
+     * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
     private $id;
 
     /**
+     * Nom de la variable
+     * 
      * @var string
      * 
      * @Groups({
      *      "variable:item:read",
      *      "variable:collection:read",
      *      "variable:item:write",
-     *      "aide:item:read"
+     *      "aide:item:read",
+     *      "aide:collection:read",
+     *      "offre:item:read",
+     *      "offre:collection:read"
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Type("string")
-     * @Assert\Length(max=180)
-     * @ORM\Column(type="string", length=180)
+     * @Assert\Length(max=40)
+     * @Assert\Regex("/^(\w*?)$/")
+     * 
+     * @ORM\Column(type="string", length=255)
      */
     private $nom;
 
     /**
+     * Description de la variable
+     * 
      * @var string
      * 
      * @Groups({
      *      "variable:item:read",
      *      "variable:collection:read",
      *      "variable:item:write",
-     *      "aide:item:read"
+     *      "aide:item:read",
+     *      "aide:collection:read",
+     *      "offre:item:read",
+     *      "offre:collection:read"
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Type("string")
      * @Assert\Length(max=180)
-     * @ORM\Column(type="string", length=180)
+     * 
+     * @ORM\Column(type="string", length=255)
      */
     private $description;
 
     /**
-     * @var Collection|Aide[]
+     * Type de la variable
+     * - string
+     * - int
+     * - bool
+     * - float
      * 
-     * @ORM\ManyToMany(targetEntity=Aide::class, mappedBy="variables")
+     * @var string
+     * 
+     * @Groups({
+     *      "variable:item:read",
+     *      "variable:collection:read",
+     *      "variable:item:write",
+     *      "aide:item:read",
+     *      "aide:collection:read",
+     *      "offre:item:read",
+     *      "offre:collection:read"
+     * })
+     * 
+     * @Assert\NotBlank
+     * @Assert\Type("string")
+     * @Assert\Choice(choices=Variable::TYPES)
+     * 
+     * @ORM\Column(type="string", length=255)
      */
-    private $aides;
+    private $type;
 
     /**
-     * @var Collection|Offre[]
+     * Liste des options disponibles
      * 
-     * @ORM\ManyToMany(targetEntity=Offre::class, mappedBy="variables")
+     * @var Collection|VariableOptions[]
+     * 
+     * @Groups({
+     *      "variable:item:read",
+     *      "variable:collection:read",
+     *      "variable:item:write",
+     *      "aide:item:read",
+     *      "aide:collection:read",
+     *      "offre:item:read",
+     *      "offre:collection:read"
+     * })
+     * 
+     * @Assert\Valid
+     * 
+     * @ORM\OneToMany(
+     *      targetEntity=VariableOption::class,
+     *      mappedBy="variable",
+     *      cascade={"persist", "remove"},
+     *      orphanRemoval=true
+     * )
      */
-    private $offres;
+    private $options;
+
+    /**
+     * @var array
+     */
+    const TYPES = [ 'string', 'int', 'bool', 'float' ];
 
     public function __construct()
     {
-        $this->aides = new ArrayCollection();
-        $this->offres = new ArrayCollection();
+        $this->options = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -131,9 +190,9 @@ class Variable
         return $this->nom;
     }
 
-    public function setNom(string $nom): self
+    public function setNom(?string $nom): self
     {
-        $this->nom = $nom;
+        $this->nom = \strtoupper($nom);
 
         return $this;
     }
@@ -143,21 +202,66 @@ class Variable
         return $this->description;
     }
 
-    public function setDescription(string $description): self
+    public function setDescription(?string $description): self
     {
         $this->description = $description;
 
         return $this;
     }
 
-    public function getAides(): Collection
+    public function getType(): ?string
     {
-        return $this->aides;
+        return $this->type;
     }
 
-    public function getOffres(): Collection
+    public function setType(?string $type): self
     {
-        return $this->offres;
+        $this->type = $type;
+
+        return $this;
     }
 
+    /**
+     * @return Collection|VariableOption[]
+     */
+    public function getOptions(): Collection
+    {
+        return $this->options;
+    }
+
+    public function toArrayOptions(): array
+    {
+        return $this->options->toArray();
+    }
+
+    public function addOption(VariableOption $option): self
+    {
+        if (!$this->options->contains($option)) {
+            $this->options[] = $option;
+            $option->setVariable($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOption(VariableOption $option): self
+    {
+        if ($this->options->contains($option)) {
+            $this->options->removeElement($option);
+            // set the owning side to null (unless already changed)
+            if ($option->getVariable() === $this) {
+                $option->setVariable(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function isOptionsValid(): bool
+    {
+        if ($this->type !== 'string') {
+            return  $this->options->count() !== 0;
+        }
+        return true;
+    }
 }

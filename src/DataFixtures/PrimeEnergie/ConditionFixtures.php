@@ -1,0 +1,25 @@
+<?php
+
+namespace App\DataFixtures\PrimeEnergie;
+
+abstract class ConditionFixtures
+{
+    /**
+     * @var array
+     */
+    const HABITER_MIEUX_PLAFONDS = [
+        '$CODE_REGION = "11" && $COMPOSITION_FOYER = 1 && $REVENUS_FOYER < 25068',
+        '$CODE_REGION = "11" && $COMPOSITION_FOYER = 2 && $REVENUS_FOYER < 36792',
+        '$CODE_REGION = "11" && $COMPOSITION_FOYER = 3 && $REVENUS_FOYER < 44188',
+        '$CODE_REGION = "11" && $COMPOSITION_FOYER = 4 && $REVENUS_FOYER < 51597',
+        '$CODE_REGION = "11" && $COMPOSITION_FOYER = 5 && $REVENUS_FOYER < 59026',
+        '$CODE_REGION = "11" && $COMPOSITION_FOYER > 5 && $REVENUS_FOYER < (59026 + ($COMPOSITION_FOYER - 5) * 7422)',
+        '$CODE_REGION <> "11" && $COMPOSITION_FOYER = 1 && $REVENUS_FOYER < 19074',
+        '$CODE_REGION <> "11" && $COMPOSITION_FOYER = 2 && $REVENUS_FOYER < 27896',
+        '$CODE_REGION <> "11" && $COMPOSITION_FOYER = 3 && $REVENUS_FOYER < 33547',
+        '$CODE_REGION <> "11" && $COMPOSITION_FOYER = 4 && $REVENUS_FOYER < 39192',
+        '$CODE_REGION <> "11" && $COMPOSITION_FOYER = 5 && $REVENUS_FOYER < 44860',
+        '$CODE_REGION <> "11" && $COMPOSITION_FOYER > 5 && $REVENUS_FOYER < (44860 + ($COMPOSITION_FOYER - 5) * 5651)'
+    ];
+
+}

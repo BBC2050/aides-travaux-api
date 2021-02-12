@@ -13,16 +13,15 @@ use Symfony\Component\Serializer\Annotation\Groups;
  * @ORM\Table(name="api_valeur")
  */
 class Valeur
-{
-    use \App\Traits\HasConditionsTrait;
-    
+{    
     /**
      * @var int
      * 
      * @Groups({
      *      "aide:item:read",
-     *      "simulation:item:read"
+     *      "offre:item:read",
      * })
+     * 
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
@@ -30,68 +29,86 @@ class Valeur
     private $id;
 
     /**
+     * Description de la valeur
+     * 
      * @var string
      * 
      * @Groups({ 
      *      "aide:item:read",
      *      "aide:item:write",
-     *      "simulation:item:read"
+     *      "offre:item:read",
+     *      "offre:item:write",
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Type("string")
      * @Assert\Length(max=180)
+     * 
      * @ORM\Column(type="string", length=180)
      */
     private $description;
 
     /**
-     * @var string|null
+     * Type de la valeur
+     * - montant
+     * - plafond 
+     * - facteur 
+     * - terme
      * 
-     * @Groups({
-     *      "aide:item:read",
-     *      "aide:item:write",
-     *      "simulation:item:read"
-     * })
-     * @Assert\Type("string")
-     * @Assert\NotBlank
-     * @Assert\ExpressionLanguageSyntax()
-     * @ORM\Column(type="string", length=255)
-     */
-    private $expression = "0";
-
-    /**
      * @var string
      * 
      * @Groups({
      *      "aide:item:read",
      *      "aide:item:write",
-     *      "simulation:item:read"
+     *      "offre:item:read",
+     *      "offre:item:write",
      * })
+     * 
      * @Assert\NotBlank
      * @Assert\Choice(choices=Valeur::TYPES)
+     * 
      * @ORM\Column(type="string", length=255)
      */
     private $type;
 
     /**
+     * Liste des conditions
+     * 
      * @var Collection|Condition[]
      * 
      * @Groups({
      *      "aide:item:read",
      *      "aide:item:write",
-     *      "simulation:item:read"
+     *      "offre:item:read",
+     *      "offre:item:write",
      * })
+     * 
+     * @Assert\Valid
+     * 
      * @ORM\ManyToMany(targetEntity=Condition::class, cascade={"persist", "remove"})
      * @ORM\JoinTable(name="api_valeur_condition")
      */
     private $conditions;
 
     /**
-     * @var float|null
+     * Expression à satisfaire
      * 
-     * @Groups({"simulation:item:read"})
+     * @var Expression
+     * 
+     * @Groups({
+     *      "aide:item:read",
+     *      "aide:item:write",
+     *      "offre:item:read",
+     *      "offre:item:write",
+     * })
+     * 
+     * @Assert\NotBlank
+     * @Assert\Valid
+     * 
+     * @ORM\OneToOne(targetEntity=Expression::class, cascade={"persist", "remove"})
+     * @ORM\JoinColumn(nullable=false)
      */
-    private $response;
+    private $expression;
 
     /**
      * @var array
@@ -120,18 +137,6 @@ class Valeur
         return $this;
     }
 
-    public function getExpression(): ?string
-    {
-        return $this->expression;
-    }
-
-    public function setExpression(?string $expression): self
-    {
-        $this->expression = $expression;
-
-        return $this;
-    }
-
     public function getType(): ?string
     {
         return $this->type;
@@ -152,6 +157,11 @@ class Valeur
         return $this->conditions;
     }
 
+    public function toArrayConditions(): array
+    {
+        return $this->conditions->toArray();
+    }
+
     public function addCondition(Condition $condition): self
     {
         if (!$this->conditions->contains($condition)) {
@@ -170,15 +180,16 @@ class Valeur
         return $this;
     }
 
-    public function getResponse(): ?float
+    public function getExpression(): ?Expression
     {
-        return $this->response;
+        return $this->expression;
     }
 
-    public function setResponse(?float $response): self
+    public function setExpression(?Expression $expression): self
     {
-        $this->response = $response;
+        $this->expression = $expression;
 
         return $this;
     }
+
 }
