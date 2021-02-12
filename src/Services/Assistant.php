@@ -34,6 +34,10 @@ abstract class Assistant
         'TRAVAUX_ELIGIBLES' => [
             'description' => 'Nombre de travaux éligibles',
             'method' => 'getTravauxEligibles'
+        ],
+        'RESTE_A_CHARGE' => [
+            'description' => 'Reste à charge après déduction des primes',
+            'method' => 'getResteACharge'
         ]
     ];
 }
