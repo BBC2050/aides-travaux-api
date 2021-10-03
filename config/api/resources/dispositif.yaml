@@ -1,0 +1,35 @@
+App\Entity\Dispositif:
+    attributes:
+        normalization_context:
+            groups: ['dispositif:read', 'secteur:read', 'distributeur:read', 'zone:read']
+        denormalization_context:
+            groups: ['dispositif:write', 'condition:write', 'valeur:write', 'zone:write']
+    collectionOperations:
+        get:
+            filters: ['dispositif.search_filter', 'dispositif.boolean_filter', 'dispositif.date_filter']
+        post:
+            security: 'is_granted("ROLE_ADMIN")'
+    itemOperations:
+        get:
+            normalization_context:
+                groups: ['dispositif:read', 'secteur:read', 'distributeur:read', 'condition:read', 'valeur:read']
+        put:
+            security: 'is_granted("ROLE_ADMIN")'
+        logo:
+            method: 'POST'
+            path: '/dispositifs/{id}/logo'
+            controller: App\Api\Controller\CreateLogoAction
+            security: 'is_granted("ROLE_ADMIN")'
+            deserialize: false
+            openapi_context:
+                request_body:
+                    content:
+                        multipart/form-data:
+                            schema:
+                                type: 'object'
+                                properties:
+                                    file:
+                                        type: 'string'
+                                        format: 'binary'
+        delete:
+            security: 'is_granted("ROLE_ADMIN")'

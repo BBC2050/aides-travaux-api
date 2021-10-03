@@ -7,114 +7,55 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
-use ApiPlatform\Core\Annotation\ApiResource;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 /**
- * @ApiResource(
- *      normalizationContext={
- *          "groups"={"utilisateur:item:read"}
- *      },
- *      denormalizationContext={
- *          "groups"={"utilisateur:item:write"}
- *      },
- *      collectionOperations={
- *          "get"={
- *              "security"="is_granted('ROLE_SUPER_ADMIN')"
- *          },
- *          "post"={
- *              "security"="is_granted('ROLE_SUPER_ADMIN')",
- *              "validationGroups"={"Default", "postValidation"}
- *          }
- *      },
- *      itemOperations={
- *          "get"={
- *              "security"="is_granted('ROLE_SUPER_ADMIN') or (is_granted('ROLE_ADMIN') and user.id === object.id)"
- *          },
- *          "put"={
- *              "security"="is_granted('ROLE_SUPER_ADMIN') or (is_granted('ROLE_ADMIN') and user.id === object.id)"
- *          },
- *          "delete"={
- *              "security"="is_granted('ROLE_SUPER_ADMIN')"
- *          }
- *      }
- * )
- * 
  * @UniqueEntity(fields={"email"})
  * 
  * @ORM\Entity
  * @ORM\HasLifecycleCallbacks
  * @ORM\Table(name="api_utilisateur")
  */
-class Utilisateur implements UserInterface
+class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 {
     /**
-     * @var int
-     * 
-     * @Groups({"utilisateur:item:read"})
-     * 
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
-    private $id;
+    #[Groups(groups: ['utilisateur:read'])]
+    private ?int $id = null;
 
     /**
-     * Email de l'utilisateur
-     * 
-     * @var string
-     * 
-     * @Groups({
-     *      "utilisateur:item:read",
-     *      "utilisateur:collection:read",
-     *      "utilisateur:item:write"
-     * })
-     * 
      * @Assert\NotBlank
      * @Assert\Email(mode="loose")
      * @Assert\Length(max=180)
      * 
      * @ORM\Column(type="string", length=180, unique=true)
      */
-    private $email;
+    #[Groups(groups: ['utilisateur:read', 'utilisateur:write'])]
+    private ?string $email = '';
 
     /**
-     * Liste des rôles
-     * 
-     * @var array
-     * 
-     * @Groups({
-     *      "utilisateur:item:read",
-     *      "utilisateur:collection:read",
-     *      "utilisateur:item:write"
-     * })
-     * 
      * @Assert\Type("array")
      * 
      * @ORM\Column(type="json")
      */
-    private $roles = [];
+    #[Groups(groups: ['utilisateur:read', 'utilisateur:write'])]
+    private ?array $roles = [];
 
     /**
-     * Mot de passe encodé
-     * 
-     * @var string
-     * 
      * @ORM\Column(type="string")
      */
-    private $password;
+    private ?string $password = '';
 
     /**
-     * Mot de passe non encodé
-     * 
-     * @var string
-     * 
-     * @Groups({"utilisateur:item:write"})
-     * 
      * @Assert\NotBlank(groups={"postValidation"})
      * @Assert\Type("string")
      * @Assert\Length(min=10, max=30)
      */
-    private $plainPassword;
+    #[Groups(groups: ['utilisateur:write'])]
+    private ?string $plainPassword = null;
 
     public function getId(): ?int
     {
@@ -138,15 +79,20 @@ class Utilisateur implements UserInterface
      *
      * @see UserInterface
      */
-    public function getUsername(): string
+    public function getUsername(): ?string
     {
-        return (string) $this->email;
+        return $this->email;
+    }
+
+    public function getUserIdentifier(): ?string
+    {
+        return $this->email;
     }
 
     /**
      * @see UserInterface
      */
-    public function getRoles(): array
+    public function getRoles(): ?array
     {
         $roles = $this->roles;
         // guarantee every user at least has ROLE_USER
@@ -165,12 +111,12 @@ class Utilisateur implements UserInterface
     /**
      * @see UserInterface
      */
-    public function getPassword(): string
+    public function getPassword(): ?string
     {
-        return (string) $this->password;
+        return $this->password;
     }
 
-    public function setPassword(string $password): self
+    public function setPassword(?string $password): self
     {
         $this->password = $password;
 

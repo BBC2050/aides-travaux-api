@@ -1,0 +1,19 @@
+App\Entity\Offre:
+    attributes:
+        normalization_context:
+            groups: ['offre:read', 'dispositif:read', 'zone:read']
+        denormalization_context:
+            groups: ['offre:write', 'condition:write', 'valeur:write', 'zone:write']
+    collectionOperations:
+        get:
+            filters: ['offre.search_filter', 'offre.boolean_filter', 'offre.date_filter']
+        post:
+            security: 'is_granted("ROLE_ADMIN")'
+    itemOperations:
+        get:
+            normalization_context:
+                groups: ['offre:read', 'dispositif:read', 'condition:read', 'valeur:read']
+        put:
+            security: 'is_granted("ROLE_ADMIN")'
+        delete:
+            security: 'is_granted("ROLE_ADMIN")'

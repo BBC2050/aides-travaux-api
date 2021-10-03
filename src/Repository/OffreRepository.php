@@ -20,59 +20,38 @@ class OffreRepository extends ServiceEntityRepository
         parent::__construct($registry, Offre::class);
     }
 
-    public function findByOuvragesAndAides(array $ouvrages, array $aides)
+    public function findAllAvailable(array $dispositifs, array $actions, array $zones)
     {
         return $this->createQueryBuilder('o')
-            ->innerJoin('o.aide', 'aide', Expr\Join::WITH, 'aide.id IN (:aides)')
-            ->addSelect('aide')
-            ->innerJoin('o.ouvrages', 'ouvrages', Expr\Join::WITH, 'ouvrages.id IN (:ouvrages)')
-            ->addSelect('ouvrages')
+            ->innerJoin('o.dispositif', 'dispositif', Expr\Join::WITH, 'dispositif.id IN (:dispositifs)')
+            ->addSelect('dispositif')
+            ->leftJoin('o.actions', 'actions')
+            ->addSelect('actions')
+            ->leftJoin('o.zones', 'zones')
+            ->addSelect('zones')
             ->leftJoin('o.conditions', 'conditions')
             ->addSelect('conditions')
-            ->leftJoin('conditions.expressions', 'conditionsExpressions')
-            ->addSelect('conditionsExpressions')
+            ->leftJoin('conditions.expression', 'conditionsExpression')
+            ->addSelect('conditionsExpression')
             ->leftJoin('o.valeurs', 'valeurs')
             ->addSelect('valeurs')
             ->leftJoin('valeurs.expression', 'valeursExpression')
             ->addSelect('valeursExpression')
-            ->leftJoin('valeurs.conditions', 'valeursConditions')
-            ->addSelect('valeursConditions')
-            ->leftJoin('valeursConditions.expressions', 'valeursConditionsExpressions')
-            ->addSelect('valeursConditionsExpressions')
+            ->leftJoin('valeurs.condition', 'valeursCondition')
+            ->addSelect('valeursCondition')
+            ->leftJoin('o.exclusions', 'exclusions')
+            ->addSelect('exclusions')
+            ->andWhere('zones.id IS NULL OR zones.code IN(:zones)')
             ->andWhere('o.active = 1')
-            ->setParameter('ouvrages', $ouvrages)
-            ->setParameter('aides', $aides)
+            ->andWhere('o.dateDebut <= :now')
+            ->andWhere('o.dateFin IS NULL OR o.dateFin > :now')
+            ->andWhere('o.actions IS EMPTY OR :actions MEMBER OF o.actions')
+            ->setParameter('zones', $zones)
+            ->setParameter('dispositifs', $dispositifs)
+            ->setParameter('actions', $actions)
+            ->setParameter('now', (new \DateTime())->format('Y-m-d'))
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
 
-    // /**
-    //  * @return Offre[] Returns an array of Offre objects
-    //  */
-    /*
-    public function findByExampleField($value)
-    {
-        return $this->createQueryBuilder('u')
-            ->andWhere('u.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('u.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?Offre
-    {
-        return $this->createQueryBuilder('u')
-            ->andWhere('u.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }

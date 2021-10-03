@@ -1,0 +1,17 @@
+App\Entity\Variable:
+    attributes:
+        normalization_context:
+            groups: ['variable:read']
+        denormalization_context:
+            groups: ['variable:write']
+    collectionOperations:
+        get:
+            filters: ['variable.search_filter']
+        post:
+            security: 'is_granted("ROLE_ADMIN")'
+    itemOperations:
+        get: ~
+        put:
+            security: 'is_granted("ROLE_ADMIN")'
+        delete:
+            security: 'is_granted("ROLE_ADMIN")'

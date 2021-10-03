@@ -1,0 +1,19 @@
+App\Entity\Utilisateur:
+    attributes:
+        normalization_context:
+            groups: ['utilisateur:read']
+        denormalization_context:
+            groups: ['utilisateur:write']
+    collectionOperations:
+        get:
+            filters: ['utilisateur.search_filter']
+            security: 'is_granted("ROLE_SUPER_ADMIN")'
+        post:
+            security: 'is_granted("ROLE_SUPER_ADMIN")'
+    itemOperations:
+        get:
+            security: 'is_granted("ROLE_SUPER_ADMIN") or (is_granted("ROLE_ADMIN") and object.getId() == user.getId())'
+        put:
+            security: 'is_granted("ROLE_SUPER_ADMIN")'
+        delete:
+            security: 'is_granted("ROLE_SUPER_ADMIN")'

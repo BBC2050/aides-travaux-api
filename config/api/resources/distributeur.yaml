@@ -1,0 +1,17 @@
+App\Entity\Distributeur:
+    attributes:
+        normalization_context:
+            groups: ['distributeur:read']
+        denormalization_context:
+            groups: ['distributeur:write']
+    collectionOperations:
+        get:
+            filters: ['distributeur.search_filter']
+        post:
+            security: 'is_granted("ROLE_ADMIN")'
+    itemOperations:
+        get: ~
+        put:
+            security: 'is_granted("ROLE_ADMIN")'
+        delete:
+            security: 'is_granted("ROLE_ADMIN")'

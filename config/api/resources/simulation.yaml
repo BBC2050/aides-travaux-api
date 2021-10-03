@@ -1,0 +1,11 @@
+App\Api\Resource\Simulation:
+    attributes:
+        input: App\Api\Dto\Input\SimulationInput
+        output: App\Api\Dto\Output\SimulationOutput
+    collectionOperations:
+        post: ~
+    itemOperations:
+        get:
+            controller: ApiPlatform\Core\Action\NotFoundAction
+            read: false
+            output: false

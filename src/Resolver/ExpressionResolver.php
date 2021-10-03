@@ -2,15 +2,12 @@
 
 namespace App\Resolver;
 
-use App\Entity\Expression;
-
 abstract class ExpressionResolver
 {
-    public static function resolve(Expression $expression, Object $data): void
+    public static function resolve(?string $expression, ExpressionDataInterface $data): mixed
     {
-        $response = ExpressionLanguageBuilder::get()->evaluate(
-            $expression->getExpressionLanguage(), [ 'object' => $data ]
-        );
-        $expression->setResponse($response);
+        return $expression !== null 
+            ? ExpressionLanguageBuilder::get()->evaluate($expression, [ 'object' => $data ])
+            : null;
     }
 }

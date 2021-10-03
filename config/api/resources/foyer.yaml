@@ -1,0 +1,14 @@
+App\Api\Resource\Foyer:
+    attributes:
+        normalization_context:
+            groups: ['read']
+        denormalization_context:
+            groups: ['write']
+    collectionOperations:
+        post:
+            path: '/tranche_revenus'
+    itemOperations:
+        get:
+            controller: ApiPlatform\Core\Action\NotFoundAction
+            read: false
+            output: false

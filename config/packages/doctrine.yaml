@@ -1,7 +1,7 @@
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
-        server_version: '5.7'
+        server_version: 'mariadb-10.2.14'
         driver: pdo_mysql
         charset: UTF8
 

@@ -2,129 +2,88 @@
 
 namespace App\Tests\Entity;
 
-use ReflectionClass;
-use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Component\Validator\ConstraintViolation;
 use App\Entity\Offre;
-use App\Entity\Aide;
+use App\Entity\Dispositif;
 use App\Entity\Condition;
-use App\Entity\Expression;
+use App\Entity\OffreVariable;
 use App\Entity\Valeur;
+use App\Entity\Variable;
+use App\Entity\Zone;
 
-class OffreTest extends KernelTestCase
+class OffreTest extends AbstractTest
 {
-    public function set($entity, $value, $propertyName = 'id')
-    {
-        $class = new ReflectionClass($entity);
-        $property = $class->getProperty($propertyName);
-        $property->setAccessible(true);
-        $property->setValue($entity, $value);
-    }
-
-    public static function getEntity(): Offre
+    public function getEntity(): Offre
     {
         return (new Offre())
+            ->setCode('CODE')
             ->setNom('Nom')
-            ->setFiche('Fiche')
-            ->setRessources([[ 'texte' => 'texte', 'url' => 'https://test.com' ]])
-            ->setActive(true)
-            ->setAide((new Aide()));
+            ->setDescription('Description')
+            ->setDateDebut(new \DateTime('now'))
+            ->setDispositif((new Dispositif()));
     }
 
-    public function assertHasErrors(Offre $code, int $number = 0)
+    public function testInvalidCode(): void
     {
-        self::bootKernel();
-        $errors = self::$container->get('validator')->validate($code);
-        $messages = [];
-        /** @var ConstraintViolation $error */
-        foreach($errors as $error) {
-            $messages[] = $error->getPropertyPath() . ' => ' . $error->getMessage();
-        }
-        $number === 0
-            ? $this->assertCount($number, $errors, implode(', ', $messages))
-            : $this->assertGreaterThanOrEqual(1, \count($errors), implode(', ', $messages));
+        $this->assertHasErrors($this->getEntity()->setCode(null), 1);
+        $this->assertHasErrors($this->getEntity()->setCode(''), 1);
+        $this->assertHasErrors($this->getEntity()->setCode(\bin2hex(\random_bytes(21))), 1);
     }
 
-    public function testValidEntity()
+    public function testInvalidNom(): void
     {
-        $this->assertHasErrors(self::getEntity(), 0);
+        $this->assertHasErrors($this->getEntity()->setNom(\bin2hex(\random_bytes(91))), 1);
     }
 
-    public function testInvalidNom()
+    public function testInvalidDescription(): void
     {
-        $this->assertHasErrors(self::getEntity()->setNom(null), 1);
-        $this->assertHasErrors(self::getEntity()->setNom(''), 1);
+        $this->assertHasErrors($this->getEntity()->setDescription(null), 1);
+        $this->assertHasErrors($this->getEntity()->setDescription(''), 1);
+        $this->assertHasErrors($this->getEntity()->setDescription(\bin2hex(\random_bytes(1001))), 1);
     }
 
-    public function testInvalidRessources()
+    public function testInvalidZones(): void
     {
-        $this->assertHasErrors(self::getEntity()->setRessources([[ 'texte' => 'texte' ]]), 1);
-        $this->assertHasErrors(self::getEntity()->setRessources([[ 'url' => 'https://url.com' ]]), 1);
-        $this->assertHasErrors(self::getEntity()->setRessources([[ 'texte' => null, 'url' => 'https://url.com' ]]), 1);
-        $this->assertHasErrors(self::getEntity()->setRessources([[ 'texte' => 'texte', 'url' => 'invalid' ]]), 1);
+        $this->assertHasErrors($this->getEntity()->addZone((new Zone())), 1);
     }
 
-    public function testInvalidActive()
+    public function testInvalidActive(): void
     {
-        $this->assertHasErrors(self::getEntity()->setActive(null), 1);
+        $this->assertHasErrors($this->getEntity()->setActive(null), 1);
     }
 
-    public function testInvalidAide()
+    public function testInvalidMultiple(): void
     {
-        $this->assertHasErrors(self::getEntity()->setAide(null), 1);
+        $this->assertHasErrors($this->getEntity()->setMultiple(null), 1);
     }
 
-    public function testIsCumulable()
+    public function testInvalidDateDebut(): void
     {
-        $offre = (new Offre())->setAide((new Aide()));
-
-        for ($i=1; $i < 3; $i++) { 
-            $aide = new Aide();
-            $this->set($aide, $i);
-
-            $offre->getAide()->addAideCumulable($aide);
-        }
-
-        $toCheck = (new Offre())->setAide((new Aide()));
-        $this->set($toCheck->getAide(), 0);
-        $this->assertFalse($offre->isCumulable($toCheck));
-
-        $this->set($toCheck->getAide(), 1);
-        $this->assertTrue($offre->isCumulable($toCheck));
+        $this->assertHasErrors($this->getEntity()->setDateDebut(null), 1);
+    }
+    
+    public function testInvalidDispositif(): void
+    {
+        $this->assertHasErrors($this->getEntity()->setDispositif(null), 1);
     }
 
-    public function testGetBase()
+    public function testInvalidCondition(): void
     {
-        $offre = new Offre();
-        $this->assertEquals(0, $offre->getBase());
-
-        $offre->addValeur((new Valeur())->setType('montant')
-            ->addCondition((new Condition())->addExpression((new Expression())->setResponse(false)))
-            ->setExpression((new Expression())->setResponse(100)));
-        $this->assertEquals(0, $offre->getBase());
-
-        $offre->addValeur((new Valeur())->setType('montant')
-            ->addCondition((new Condition())->addExpression((new Expression())->setResponse(true)))
-            ->setExpression((new Expression())->setResponse(200)));
-        $this->assertEquals(200, $offre->getBase());
-        
-        $offre->addValeur((new Valeur())->setType('montant')
-            ->addCondition((new Condition())->addExpression((new Expression())->setResponse(true)))
-            ->setExpression((new Expression())->setResponse(300)));
-        $this->assertEquals(300, $offre->getBase());
+        $this->assertHasErrors($this->getEntity()->addCondition((new Condition())), 1);
     }
 
-    public function testIsEligible()
+    public function testInvalidValeur(): void
     {
-        $offre = (new Offre())->setAide(new Aide());
-        $this->assertTrue($offre->isEligible());
+        $this->assertHasErrors($this->getEntity()->addValeur((new Valeur())), 1);
+    }
 
-        $offre->addCondition((new Condition())->addExpression((new Expression())->setResponse(true)));
-        $offre->getAide()->addCondition((new Condition())->addExpression((new Expression())->setResponse(true)));
-        $this->assertTrue($offre->isEligible());
-
-        $offre->getAide()->addCondition((new Condition())->addExpression((new Expression())->setResponse(false)));
-        $this->assertFalse($offre->isEligible());
+    public function testInvalidVariable(): void
+    {
+        $this->assertHasErrors($this->getEntity()->addVariable((new OffreVariable())), 1);
+        $this->assertHasErrors($this->getEntity()->addVariable(
+            (new OffreVariable())
+                ->setVariable((new Variable())->setCode('$T.ma_variable'))
+                ->setLabel('Test')
+        ), 1);
     }
 
 }

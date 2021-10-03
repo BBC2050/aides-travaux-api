@@ -1,0 +1,14 @@
+App\Api\Resource\Logement:
+    attributes:
+        normalization_context:
+            groups: ['read']
+        denormalization_context:
+            groups: ['write']
+    collectionOperations:
+        post:
+            path: '/zone_climatique'
+    itemOperations:
+        get:
+            controller: ApiPlatform\Core\Action\NotFoundAction
+            read: false
+            output: false

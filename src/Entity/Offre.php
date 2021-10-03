@@ -7,269 +7,196 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
-use ApiPlatform\Core\Annotation\ApiResource;
-use ApiPlatform\Core\Annotation\ApiFilter;
-use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
+use App\Entity\Traits\HasConditionsTrait;
+use App\Entity\Traits\HasValeursTrait;
 use App\Repository\OffreRepository;
-use App\Resolver\ConditionsResolver;
-use App\Resolver\ValeurResolver;
-use App\Helper\Helpers;
-use App\Services\Assistant;
 
 /**
- * @ApiResource(
- *      normalizationContext={
- *          "groups"={"offre:item:read"}
- *      },
- *      denormalizationContext={
- *          "groups"={"offre:item:write"}
- *      },
- *      collectionOperations={
- *          "get"={
- *              "normalization_context"={
- *                  "groups"={"offre:collection:read"}
- *              }
- *          },
- *          "post"={
- *              "security"="is_granted('ROLE_ADMIN')"
- *          }
- *      },
- *      itemOperations={
- *          "get",
- *          "put"={
- *              "security"="is_granted('ROLE_ADMIN')"
- *          },
- *          "delete"={
- *              "security"="is_granted('ROLE_ADMIN')"
- *          }
- *      }
- * )
- * 
- * @ApiFilter(SearchFilter::class, properties={
- *      "aide": "exact",
- *      "ouvrages": "exact"
- * })
- * 
+ * @ORM\HasLifecycleCallbacks
  * @ORM\Entity(repositoryClass=OffreRepository::class)
  * @ORM\Table(name="api_offre")
  */
 class Offre
 {
-    use Helpers;
-
+    use HasConditionsTrait, HasValeursTrait;
+    
     /**
-     * @var int
-     * 
-     * @Groups({
-     *      "offre:item:read",
-     *      "offre:collection:read",
-     *      "aide:item:read",
-     *      "simulation:item:read",
-     * })
-     * 
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      */
-    private $id;
+    #[Groups(groups: ['offre:read'])]
+    private ?int $id = null;
 
     /**
-     * Nom de l'offre
-     * 
-     * @var string
-     * 
-     * @Groups({
-     *      "offre:item:read", 
-     *      "offre:collection:read", 
-     *      "offre:item:write",
-     *      "aide:item:read",
-     *      "simulation:item:read"
-     * })
+     * Code interne
      * 
      * @Assert\NotBlank
      * @Assert\Type("string")
-     * @Assert\Length(max=180)
+     * @Assert\Length(max=40)
      * 
      * @ORM\Column(type="string", length=180)
      */
-    private $nom;
+    #[Groups(groups: ['offre:read', 'offre:write'])]
+    private ?string $code = null;
 
     /**
-     * Fiche d'opération standardisée (Certificat d'économies d'énergie)
-     * 
-     * @var string|null
-     * 
-     * @Groups({
-     *      "offre:item:read", 
-     *      "offre:collection:read", 
-     *      "offre:item:write",
-     *      "simulation:item:read"
-     * })
-     * 
      * @Assert\Type("string")
      * @Assert\Length(max=180)
      * 
      * @ORM\Column(type="string", length=180, nullable=true)
      */
-    private $fiche;
+    #[Groups(groups: ['offre:read', 'offre:write'])]
+    private ?string $nom = null;
 
     /**
-     * Ressources externes
+     * Norme RFC7764
      * 
-     * @var array|null
+     * @Assert\NotBlank
+     * @Assert\Type("string")
+     * @Assert\Length(max=2000)
      * 
-     * @Groups({
-     *      "offre:item:read", 
-     *      "offre:collection:read", 
-     *      "offre:item:write",
-     *      "simulation:item:read"
-     * })
-     * 
-     * @Assert\Type("array")
-     * @Assert\All({
-     *     @Assert\Type("array"),
-     *     @Assert\Collection(
-     *          fields = {
-     *              "texte" = {
-     *                  @Assert\NotBlank,
-     *                  @Assert\Type("string"),
-     *                  @Assert\Length(max = 100)
-     *              },
-     *              "url" = {
-     *                  @Assert\NotBlank,
-     *                  @Assert\Url,
-     *              }
-     *          },
-     *          allowMissingFields = false
-     *      )
-     * })
-     * 
-     * @ORM\Column(type="array", nullable=true)
+     * @ORM\Column(type="text")
      */
-    private $ressources = [];
+    #[Groups(groups: ['offre:read', 'offre:write'])]
+    private ?string $description = null;
 
     /**
-     * Statut de l'offre
-     * 
-     * @var bool
-     * 
-     * @Groups({
-     *      "offre:item:read", 
-     *      "offre:collection:read", 
-     *      "offre:item:write",
-     *      "simulation:item:read"
-     * })
-     * 
+    * @Assert\NotBlank
+
+    * @ORM\Column(type="datetime")
+    */
+    #[Groups(groups: ['offre:read', 'offre:write'])]
+   private ?\DateTimeInterface $dateDebut = null;
+
+   /**
+    * @ORM\Column(type="datetime", nullable=true)
+    */
+    #[Groups(groups: ['offre:read', 'offre:write'])]
+   private ?\DateTimeInterface $dateFin = null;
+
+    /**
      * @Assert\NotNull
      * @Assert\Type("bool")
      * 
      * @ORM\Column(type="boolean")
      */
-    private $active = false;
+    #[Groups(groups: ['offre:read', 'offre:write'])]
+    private ?bool $active = false;
 
     /**
-     * Aide de référence
+     * @Assert\NotNull
+     * @Assert\Type("bool")
      * 
-     * @var Aide
-     * 
-     * @Groups({
-     *      "offre:collection:read",
-     *      "offre:item:read", 
-     *      "offre:item:write",
-     * })
-     * 
+     * @ORM\Column(type="boolean")
+     */
+    #[Groups(groups: ['offre:read', 'offre:write'])]
+    private ?bool $multiple = false;
+
+    /**
      * @Assert\NotBlank
      * 
-     * @ORM\ManyToOne(targetEntity=Aide::class, inversedBy="offres")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\ManyToOne(targetEntity=Dispositif::class, inversedBy="offres")
+     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */
-    private $aide;
+    #[Groups(groups: ['dispositif:read', 'offre:write'])]
+    private ?Dispositif $dispositif = null;
 
     /**
-     * Liste des ouvrages
+     * @var Collection|Action[]
      * 
-     * @var Collection|Ouvrage[]
-     * 
-     * @Groups({
-     *      "offre:collection:read",
-     *      "offre:item:read", 
-     *      "offre:item:write"
-     * })
-     * 
-     * @ORM\ManyToMany(targetEntity=Ouvrage::class, inversedBy="offres")
-     * @ORM\JoinTable(name="api_offre_ouvrage")
+     * @ORM\ManyToMany(targetEntity=Action::class)
+     * @ORM\JoinTable(name="api_offre_action")
      */
-    private $ouvrages;
+    
+    #[Groups(groups: ['action:read', 'offre:write'])]
+    private Collection $actions;
 
     /**
-     * Liste des valeurs
+     * Liste des zones éligibles à l'offre
      * 
+     * @var Collection|Zone[]
+     * 
+     * @Assert\Valid
+     * 
+     * @ORM\OneToMany(targetEntity=Zone::class, mappedBy="offre", cascade={"persist", "remove"})
+     */
+    #[Groups(groups: ['zone:read', 'zone:write'])]
+    private Collection $zones;
+
+    /**
      * @var Collection|Valeur[]
      * 
-     * @Groups({
-     *      "offre:item:read", 
-     *      "offre:item:write"
-     * })
+     * @Assert\Valid
      * 
-     * @ORM\ManyToMany(
-     *      targetEntity=Valeur::class,
-     *      orphanRemoval=true,
-     *      cascade={"persist", "remove"}
-     * )
+     * @ORM\ManyToMany(targetEntity=Valeur::class, orphanRemoval=true, cascade={"persist", "remove"})
      * @ORM\JoinTable(name="api_offre_valeur")
      */
-    private $valeurs;
+    #[Groups(groups: ['valeur:read', 'valeur:write'])]
+    protected Collection $valeurs;
 
     /**
-     * Liste des conditions à satisfaire
-     * 
      * @var Collection|Condition[]
      * 
-     * @Groups({
-     *      "offre:item:read", 
-     *      "offre:item:write",
-     *      "simulation:item:read"
-     * })
+     * @Assert\Valid
      * 
-     * @ORM\ManyToMany(
-     *      targetEntity=Condition::class,
+     * @ORM\ManyToMany(targetEntity=Condition::class, orphanRemoval=true, cascade={"persist", "remove"})
+     * @ORM\JoinTable(name="api_offre_condition")
+     */
+    #[Groups(groups: ['condition:read', 'condition:write'])]
+    protected Collection $conditions;
+
+    /**
+     * @var Collection|OffreVariable[]
+     * 
+     * @Assert\Valid
+     * 
+     * @ORM\OneToMany(
+     *      targetEntity=OffreVariable::class,
+     *      mappedBy="offre",
      *      orphanRemoval=true,
      *      cascade={"persist", "remove"}
      * )
-     * @ORM\JoinTable(name="api_offre_condition")
      */
-    private $conditions;
+    #[Groups(groups: ['offre:read', 'offre:write'])]
+    protected Collection $variables;
 
     /**
-     * Liste des variables
+     * Liste des offres non cumulables
      * 
-     * @var Collection|Variable[]
+     * @var Collection|Offre[]
      * 
-     * @Groups({"offre:item:read", "offre:collection:read"})
-     * 
-     * @ORM\ManyToMany(targetEntity=Variable::class)
-     * @ORM\JoinTable(name="api_offre_variable")
+     * @ORM\ManyToMany(targetEntity=Offre::class)
+     * @ORM\JoinTable(name="api_offre_offre")
      */
-    private $variables;
-
-    /**
-     * Ouvrage simulé
-     * 
-     * @var SimulationOuvrage|null
-     */
-    private $ouvrage;
+    #[Groups(groups: ['offre:read', 'offre:write'])]
+    private Collection $exclusions;
 
     public function __construct()
     {
+        $this->actions = new ArrayCollection();
+        $this->zones = new ArrayCollection();
         $this->valeurs = new ArrayCollection();
         $this->conditions = new ArrayCollection();
-        $this->ouvrages = new ArrayCollection();
         $this->variables = new ArrayCollection();
+        $this->exclusions = new ArrayCollection();
     }
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getCode(): ?string
+    {
+        return $this->code;
+    }
+
+    public function setCode(?string $code): self
+    {
+        $this->code = $code;
+
+        return $this;
     }
 
     public function getNom(): ?string
@@ -284,31 +211,43 @@ class Offre
         return $this;
     }
 
-    public function getFiche(): ?string
+    public function getDescription(): ?string
     {
-        return $this->fiche;
+        return $this->description;
     }
 
-    public function setFiche(?string $fiche): self
+    public function setDescription(?string $description): self
     {
-        $this->fiche = $fiche;
+        $this->description = $description;
 
         return $this;
     }
 
-    public function getRessources(): ?array
+    public function getDateDebut(): ?\DateTimeInterface
     {
-        return $this->ressources;
+        return $this->dateDebut;
     }
 
-    public function setRessources(?array $ressources): self
+    public function setDateDebut(?\DateTimeInterface $dateDebut): self
     {
-        $this->ressources = $ressources;
+        $this->dateDebut = $dateDebut;
+
+        return $this;
+    }
+    
+    public function getDateFin(): ?\DateTimeInterface
+    {
+        return $this->dateFin;
+    }
+
+    public function setDateFin(?\DateTimeInterface $dateFin): self
+    {
+        $this->dateFin = $dateFin;
 
         return $this;
     }
 
-    public function isActive(): ?bool
+    public function getActive(): ?bool
     {
         return $this->active;
     }
@@ -320,127 +259,132 @@ class Offre
         return $this;
     }
 
-    public function getAide(): ?Aide
+    public function getMultiple(): ?bool
     {
-        return $this->aide;
+        return $this->multiple;
     }
 
-    public function setAide(?Aide $aide): self
+    public function setMultiple(?bool $multiple): self
     {
-        $this->aide = $aide;
+        $this->multiple = $multiple;
 
         return $this;
+    }
+
+    public function getDispositif(): ?Dispositif
+    {
+        return $this->dispositif;
+    }
+
+    public function setDispositif(?Dispositif $dispositif): self
+    {
+        $this->dispositif = $dispositif;
+
+        return $this;
+    }
+
+    public function getActions(): array
+    {
+        return $this->actions->getValues();
+    }
+
+    public function getActionsCollection(): Collection
+    {
+        return $this->actions;
+    }
+
+    public function addAction(Action $action): self
+    {
+        if (!$this->actions->contains($action)) {
+            $this->actions[] = $action;
+        }
+
+        return $this;
+    }
+
+    public function removeAction(Action $action): self
+    {
+        if ($this->actions->contains($action)) {
+            $this->actions->removeElement($action);
+        }
+
+        return $this;
+    }
+
+    public function getZones(): array
+    {
+        return $this->zones->getValues();
     }
 
     /**
-     * @return Collection|Ouvrage[]
+     * @return Collection|Zone[]
      */
-    public function getOuvrages(): Collection
+    public function getZonesCollection(): Collection
     {
-        return $this->ouvrages;
+        return $this->zones;
     }
 
-    public function addOuvrage(Ouvrage $ouvrage): self
+    public function addZone(Zone $zone): self
     {
-        if (!$this->ouvrages->contains($ouvrage)) {
-            $this->ouvrages[] = $ouvrage;
+        if (!$this->zones->contains($zone)) {
+            $this->zones[] = $zone;
+            $zone->setOffre($this);
         }
 
         return $this;
     }
 
-    public function removeOuvrage(Ouvrage $ouvrage): self
+    public function removeZone(Zone $zone): self
     {
-        if ($this->ouvrages->contains($ouvrage)) {
-            $this->ouvrages->removeElement($ouvrage);
+        if ($this->zones->removeElement($zone)) {
+            // set the owning side to null (unless already changed)
+            if ($zone->getOffre() === $this) {
+                $zone->setOffre(null);
+            }
         }
 
         return $this;
     }
 
-    /**
-     * @return Collection|Valeur[]
-     */
-    public function getAllValeurs(): Collection
+    public function getExclusions(): array
     {
-        return new ArrayCollection(\array_merge(
-            $this->aide->getValeurs()->toArray(), $this->valeurs->toArray()
-        ));
+        return $this->exclusions->getValues();
     }
 
-    public function getValeurs(): Collection
+    public function getExclusionsCollection(): Collection
     {
-        return $this->valeurs;
+        return $this->exclusions;
     }
 
-    public function addValeur(Valeur $valeur): self
+    public function addExclusion(Offre $dispositif): self
     {
-        if (!$this->valeurs->contains($valeur)) {
-            $this->valeurs[] = $valeur;
+        if (!$this->exclusions->contains($dispositif)) {
+            $this->exclusions[] = $dispositif;
         }
 
         return $this;
     }
 
-    public function removeValeur(Valeur $valeur): self
+    public function removeExclusion(Offre $dispositif): self
     {
-        if ($this->valeurs->contains($valeur)) {
-            $this->valeurs->removeElement($valeur);
+        if ($this->exclusions->contains($dispositif)) {
+            $this->exclusions->removeElement($dispositif);
         }
 
         return $this;
     }
 
-    /**
-     * @return Collection|Condition[]
-     */
-    public function getAllConditions(): Collection
-    {
-        return new ArrayCollection(\array_merge(
-            $this->aide->getConditions()->toArray(), $this->conditions->toArray()
-        ));
-    }
-
-    /**
-     * @return Collection|Condition[]
-     */
-    public function getConditions(): Collection
-    {
-        return $this->conditions;
-    }
-
-    public function addCondition(Condition $condition): self
-    {
-        if (!$this->conditions->contains($condition)) {
-            $this->conditions[] = $condition;
-        }
-
-        return $this;
-    }
-
-    public function removeCondition(Condition $condition): self
-    {
-        if ($this->conditions->contains($condition)) {
-            $this->conditions->removeElement($condition);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|Variable[]
-     */
-    public function getVariables(): Collection
-    {
-        return $this->variables;
-    }
-
-    public function toArrayVariables(): array
+    public function getVariables(): array
     {
         return $this->variables->getValues();
     }
 
-    public function addVariable(Variable $variable): self
+    public function getVariablesCollection(): Collection
+    {
+        return $this->variables;
+    }
+
+    public function addVariable(OffreVariable $variable): self
     {
         if (!$this->variables->contains($variable)) {
             $this->variables[] = $variable;
@@ -449,7 +393,7 @@ class Offre
         return $this;
     }
 
-    public function removeVariable(Variable $variable): self
+    public function removeVariable(OffreVariable $variable): self
     {
         if ($this->variables->contains($variable)) {
             $this->variables->removeElement($variable);
@@ -458,129 +402,56 @@ class Offre
         return $this;
     }
 
-    public function getOuvrage(): ?SimulationOuvrage
+    // Données de sortie
+
+    #[Groups(groups: ['offre:read'])]
+    public function getVariablesGlobales(): array
     {
-        return $this->ouvrage;
+        return $this->dispositif->getVariables();
     }
 
-    public function setOuvrage(?SimulationOuvrage $ouvrage): self
-    {
-        $this->ouvrage = $ouvrage;
+    // Validation
 
-        return $this;
+    /**
+     * @Assert\Date
+     */
+    public function isDateDebutValid(): ?string
+    {
+        return $this->dateDebut ? $this->dateDebut->format('Y-m-d') : null;
     }
 
     /**
-     * @return mixed
+     * @Assert\Date
      */
-    public function get(string $name)
+    public function isDateFinValid(): ?string
     {
-        // Données d'entrée globales et par ouvrage
-        $variables = \array_merge(
-            $this->ouvrage->getVariables(),
-            $this->ouvrage->getSimulation()->getVariables()
-        );
-
-        if (\array_key_exists($name, $variables)) {
-            return $variables[$name];
-        }
-        if (\array_key_exists($name, Assistant::HELPERS)) {
-            $method = Assistant::HELPERS[$name]['method'];
-
-            if (\method_exists($this, $method)) {
-                return $this->$method();
-            }
-        }
-        return null;
+        return $this->dateFin ? $this->dateFin->format('Y-m-d') : null;
     }
 
-    public function isCumulable(Offre $offre): bool
+    /**
+     * @Assert\IsTrue
+     */
+    public function isVariablesValid(): bool
     {
-        $aidesCumulables = $this->aide->getAidesCumulables()->map(function(Aide $aide) {
-            return $aide->getId();
+        $variables = $this->variables->map(function(OffreVariable $item) {
+            return $item->getVariable() ? $item->getVariable()->getCode() : null;
         })->getValues();
 
-        return \in_array($offre->getAide()->getId(), $aidesCumulables);
-    }
-
-    /**
-     * @Groups({"simulation:offre:item:read"})
-     */
-    public function getAideId()
-    {
-        return $this->aide->getId();
-    }
-
-    /**
-     * @Groups({"simulation:item:read"})
-     */
-    public function isEligible(): bool
-    {
-        return ConditionsResolver::isEligible($this->getAllConditions());
-    }
-
-    /**
-     * @Groups({"simulation:item:read"})
-     */
-    public function getBase(): float
-    {
-        $valeurs = $this->getValeurs()
-            ->filter(function(Valeur $valeur) {
-                return $valeur->getType() === 'montant';
-            })
-            ->filter(function(Valeur $valeur) {
-                return ConditionsResolver::isEligible($valeur->getConditions());
-            })
-            ->map(function(Valeur $valeur) {
-                return $valeur->getExpression()->getResponse();
-            });
-
-        return $valeurs->count() === 0 ? (float) 0 : \max($valeurs->toArray());
-    }
-
-    /**
-     * @Groups({"simulation:item:read"})
-     */
-    public function getPlafond(): ?float
-    {
-        $plafonds = $this->getAllValeurs()
-            ->filter(function(Valeur $valeur) {
-                return $valeur->getType() === 'plafond';
-            })
-            ->filter(function(Valeur $valeur) {
-                return ConditionsResolver::isEligible($valeur->getConditions());
-            })
-            ->map(function(Valeur $valeur) {
-                return $valeur->getExpression()->getResponse();
-            })
-            ->getValues();
-
-        return $plafonds ? (float) \min($plafonds) : null;
-    }
-
-    /**
-     * @Groups({"simulation:item:read"})
-     */
-    public function getMontantBrut()
-    {
-        $montant = ValeurResolver::applyFacteurs($this->getBase(), $this->valeurs);
-        $montant = ValeurResolver::applyTermes($montant, $this->valeurs);
-
-        $montant = ValeurResolver::applyFacteurs($montant, $this->aide->getValeurs());
-        $montant = ValeurResolver::applyTermes($montant, $this->aide->getValeurs());
-
-        return $montant;
-    }
-
-    /**
-     * @Groups({"simulation:item:read"})
-     */
-    public function getMontant(): float
-    {
-        return \min(
-            ValeurResolver::applyPlafonds($this->getMontantBrut(), $this->valeurs),
-            ValeurResolver::applyPlafonds($this->getMontantBrut(), $this->aide->getValeurs())
-        );
+        foreach ($this->valeurs as $valeur) {
+            foreach ($valeur->getVariables() as $variable) {
+                if ($variable->isGlobale() && \in_array($variable, $variables) === false) {
+                    return false;
+                }
+            }
+        }
+        foreach ($this->conditions as $condition) {
+            foreach ($condition->getVariables() as $variable) {
+                if ($variable->isGlobale() && \in_array($variable, $variables) === false) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
 }

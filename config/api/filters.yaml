@@ -1,0 +1,73 @@
+services:
+    action.search_filter:
+        parent: 'api_platform.doctrine.orm.search_filter'
+        arguments: [ { id: 'exact', code: 'exact', categorie.id: 'exact', nom: 'partial' } ]
+        tags:  [ 'api_platform.filter' ]
+    action_categorie.search_filter:
+        parent: 'api_platform.doctrine.orm.search_filter'
+        arguments: [ { id: 'exact', code: 'exact', secteur.id: 'exact', nom: 'partial' } ]
+        tags:  [ 'api_platform.filter' ]
+    dispositif.search_filter:
+        parent: 'api_platform.doctrine.orm.search_filter'
+        arguments: [ {
+            id: 'exact',
+            code: 'exact',
+            type: 'exact',
+            nom: 'partial',
+            zones.code: 'exact',
+            secteur.id: 'exact',
+            distributeur.id: 'exact'
+        } ]
+        tags:  [ 'api_platform.filter' ]
+    dispositif.boolean_filter:
+        parent: 'api_platform.doctrine.orm.boolean_filter'
+        arguments: [ { active: ~ } ]
+        tags:  [ 'api_platform.filter' ]
+    dispositif.date_filter:
+        parent: 'api_platform.doctrine.orm.date_filter'
+        arguments: [ { dateDebut: include_null_before_and_after, dateFin: include_null_before_and_after } ]
+        tags:  [ 'api_platform.filter' ]
+    distributeur.search_filter:
+        parent: 'api_platform.doctrine.orm.search_filter'
+        arguments: [ { id: 'exact', nom: 'partial' } ]
+        tags:  [ 'api_platform.filter' ]
+    offre.search_filter:
+        parent: 'api_platform.doctrine.orm.search_filter'
+        arguments: [ {
+            id: 'exact',
+            code: 'exact',
+            nom: 'partial',
+            zones.code: 'exact',
+            dispositif.id: 'exact',
+            actions.id: 'exact'
+        } ]
+        tags:  [ 'api_platform.filter' ]
+    offre.boolean_filter:
+        parent: 'api_platform.doctrine.orm.boolean_filter'
+        arguments: [ { active: ~ } ]
+        tags:  [ 'api_platform.filter' ]
+    offre.date_filter:
+        parent: 'api_platform.doctrine.orm.date_filter'
+        arguments: [ {
+            dateDebut: include_null_before_and_after,
+            dateFin: include_null_before_and_after,
+            dispositif.dateDebut: include_null_before_and_after,
+            dispositif.dateFin: include_null_before_and_after
+        } ]
+        tags:  [ 'api_platform.filter' ]
+    secteur.search_filter:
+        parent: 'api_platform.doctrine.orm.search_filter'
+        arguments: [ { id: 'exact', code: 'exact', secteur.id: 'exact', nom: 'partial' } ]
+        tags:  [ 'api_platform.filter' ]
+    secteur.exists_filter:
+        parent: 'api_platform.doctrine.orm.exists_filter'
+        arguments: [ { parent: ~ } ]
+        tags:  [ 'api_platform.filter' ]
+    utilisateur.search_filter:
+        parent: 'api_platform.doctrine.orm.search_filter'
+        arguments: [ { id: 'exact', email: 'partial' } ]
+        tags:  [ 'api_platform.filter' ]
+    variable.search_filter:
+        parent: 'api_platform.doctrine.orm.search_filter'
+        arguments: [ { code: 'exact', type: 'exact', categorie: 'partial' } ]
+        tags:  [ 'api_platform.filter' ]

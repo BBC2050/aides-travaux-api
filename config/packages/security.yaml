@@ -1,5 +1,6 @@
 security:
-    encoders:
+    enable_authenticator_manager: true
+    password_hashers:
         App\Entity\Utilisateur:
             algorithm: auto
     providers:
@@ -13,21 +14,19 @@ security:
             security: false
 
         main:
+            pattern: ^/login
             stateless: true
-            anonymous: true
-            provider: app_user_provider
             json_login:
-                check_path: /authentication_token
+                check_path: /login_check
                 username_path: email
                 password_path: plainPassword
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
-            guard:
-                authenticators:
-                    - lexik_jwt_authentication.jwt_token_authenticator
+        api:
+            pattern: ^
+            stateless: true
+            jwt: ~
 
     role_hierarchy:
         ROLE_ADMIN: ROLE_USER
         ROLE_SUPER_ADMIN: ROLE_ADMIN
-
-    access_control:

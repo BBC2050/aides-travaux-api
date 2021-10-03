@@ -10,12 +10,12 @@ class ExpressionLanguageTransformerTest extends TestCase
     /**
      * @dataProvider provideData
      */
-    public function testTransform($expression, $expect)
+    public function testTransform($expression, $expect): void
     {
         $this->assertEquals(ExpressionLanguageTransformer::transform($expression), $expect);
     }
 
-    public function provideData()
+    public function provideData(): array
     {
         return [
             [ null, 'null' ],
@@ -25,7 +25,7 @@ class ExpressionLanguageTransformerTest extends TestCase
             [ 'false', 'false' ],
             [ 'null', 'null' ],
             [ ' = <> and or ', ' === !== && || '],
-            [ '$VARIABLE', 'object.get(\'VARIABLE\')']
+            [ '$T.ma_variable', 'object.getData(\'$T.ma_variable\')']
         ];
     }
 }

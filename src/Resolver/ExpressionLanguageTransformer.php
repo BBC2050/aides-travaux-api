@@ -19,11 +19,9 @@ abstract class ExpressionLanguageTransformer
     private static function replaceVariables(string $expression): ?string
     {
         $expressionLanguage = preg_replace_callback(
-            '/(\$\w+)/',
+            '/(\$[A-Z]{1,5}\.\w*)/',
             function($matches) {
-                $name = \str_replace('$', '', $matches[0]);
-
-                return "object.get('".$name."')";
+                return "object.getData('".$matches[0]."')";
             },
             $expression
         );
@@ -34,4 +32,5 @@ abstract class ExpressionLanguageTransformer
     {
         return \str_replace([' = ', ' <> ', ' or ', ' and '], [' === ', ' !== ', ' || ', ' && '], $expression);
     }
+
 }

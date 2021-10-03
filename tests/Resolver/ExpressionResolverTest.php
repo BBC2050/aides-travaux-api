@@ -2,34 +2,26 @@
 
 namespace App\Tests\Resolver;
 
-use App\Entity\Expression;
-use App\Entity\Simulation;
-use App\Entity\SimulationAide;
 use PHPUnit\Framework\TestCase;
 use App\Resolver\ExpressionResolver;
+use App\Resolver\ExpressionDataInterface;
 
 class ExpressionResolverTest extends TestCase
 {
-    const SURFACE_HABITABLE = 10;
+    const VARIABLE = 10;
 
     /**
      * @dataProvider provideData
      */
-    public function testResolve($expression, $expect)
+    public function testResolve($expression, $expect): void
     {
-        $expression = (new Expression())->setExpression($expression);
+        $mockData = $this->createMock(ExpressionDataInterface::class);
+        $mockData->method('getData')->will($this->returnValue(self::VARIABLE));
 
-        $data = (new Simulation())
-            ->setVariables([ 'SURFACE_HABITABLE' => self::SURFACE_HABITABLE])
-            ->addAide((new SimulationAide())
-        );
-
-        ExpressionResolver::resolve($expression, $data->getAides()->first());
-
-        $this->assertEquals($expect, $expression->getResponse());
+        $this->assertEquals($expect, ExpressionResolver::resolve($expression, $mockData));
     }
 
-    public function provideData()
+    public function provideData(): array
     {
         return [
             [ null, null ],
@@ -38,8 +30,8 @@ class ExpressionResolverTest extends TestCase
             [ 'true', true ],
             [ 'false', false ],
             [ 'null', null ],
-            [ '$SURFACE_HABITABLE * 10', 100],
-            [ '$SURFACE_HABITABLE === 10', true]
+            [ 'object.getData("$T.ma_variable") * 10', 100],
+            [ 'object.getData("$T.ma_variable") === 10', true]
         ];
     }
 }

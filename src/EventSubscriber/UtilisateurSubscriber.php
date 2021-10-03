@@ -3,7 +3,7 @@
 namespace App\EventSubscriber;
 
 use ApiPlatform\Core\EventListener\EventPriorities;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
@@ -13,13 +13,13 @@ use App\Entity\Utilisateur;
 final class UtilisateurSubscriber implements EventSubscriberInterface
 {
     /**
-     * @var UserPasswordEncoderInterface
+     * @var UserPasswordHasherInterface
      */
-    private $encoder;
+    private $hasher;
 
-    public function __construct(UserPasswordEncoderInterface $encoder)
+    public function __construct(UserPasswordHasherInterface $hasher)
     {
-        $this->encoder = $encoder;
+        $this->hasher = $hasher;
     }
 
     public static function getSubscribedEvents()
@@ -38,8 +38,9 @@ final class UtilisateurSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $user->setPassword($this->encoder->encodePassword(
+        $user->setPassword($this->hasher->hashPassword(
             $user, $user->getPlainPassword()
         ));
     }
+
 }

@@ -4,33 +4,27 @@ namespace App\DataFixtures;
 
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
+use App\Entity\Distributeur;
 
+/**
+ * * 5 items
+ */
 class DistributeurFixtures extends Fixture
 {
-    /**
-     * @var array
-     */
-    const DISTRIBUTEURS = [
-        'Agence nationale de l\'habitat',
-        'Fournisseurs d\'énergie',
-        'Banques partenaires'
-    ];
-
-    /**
-     * @var string
-     */
-    const PREFIXE = 'DISTRIB_';
+    const ITEMS = 5;
+    const PREFIXE = 'DISTRIBUTEUR_';
 
     public function load(ObjectManager $manager)
     {
-        foreach (self::DISTRIBUTEURS as $index => $name) {
-            $distributeur = (new \App\Entity\Distributeur())
-                ->setNom($name)
-                ->setPerimetre('FR');
+        for ($i=0; $i < self::ITEMS; $i++) { 
+            $distributeur = (new Distributeur())
+                ->setNom('Distributeur test - ' . $i)
+                ->setDescription('Description');
 
             $manager->persist($distributeur);
-            $this->addReference(self::PREFIXE.($index + 1), $distributeur);
+            $this->addReference(self::PREFIXE . $i, $distributeur);
         }
         $manager->flush();
     }
+
 }

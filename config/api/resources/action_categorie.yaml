@@ -1,0 +1,17 @@
+App\Entity\ActionCategorie:
+    attributes:
+        normalization_context:
+            groups: ['categorie:read', 'secteur:read']
+        denormalization_context:
+            groups: ['categorie:write']
+    collectionOperations:
+        get:
+            filters: ['action_categorie.search_filter']
+        post:
+            security: 'is_granted("ROLE_ADMIN")'
+    itemOperations:
+        get: ~
+        put:
+            security: 'is_granted("ROLE_ADMIN")'
+        delete:
+            security: 'is_granted("ROLE_ADMIN")'

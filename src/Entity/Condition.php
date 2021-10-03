@@ -2,8 +2,6 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -15,64 +13,30 @@ use Symfony\Component\Serializer\Annotation\Groups;
 class Condition
 {
     /**
-     * @var int
-     * 
-     * @Groups({
-     *      "aide:item:read",
-     *      "offre:item:read"
-     * })
-     * 
      * @ORM\Id()
      * @ORM\GeneratedValue()
-     * 
      * @ORM\Column(type="integer")
      */
-    private $id;
+    private ?int $id = null;
 
     /**
-     * Description de la condition
-     * 
-     * @var string
-     * 
-     * @Groups({ 
-     *      "aide:item:read", 
-     *      "aide:item:write",
-     *      "offre:item:read",
-     *      "offre:item:write",
-     *      "simulation:item:read"
-     * })
+     * Norme RFC7764
      * 
      * @Assert\NotBlank
      * @Assert\Type("string")
-     * @Assert\Length(max=180)
+     * @Assert\Length(max=2000)
      * 
-     * @ORM\Column(type="string", length=180)
+     * @ORM\Column(type="text")
      */
-    private $description;
+    private ?string $description = null;
 
     /**
-     * Liste des expressions validant la condition
-     * 
-     * @var Collection|Expression[]
-     * 
-     * @Groups({ 
-     *      "aide:item:read", 
-     *      "aide:item:write",
-     *      "offre:item:read",
-     *      "offre:item:write"
-     * })
-     * 
+     * @Assert\NotBlank
      * @Assert\Valid
      * 
-     * @ORM\ManyToMany(targetEntity=Expression::class, cascade={"persist", "remove"})
-     * @ORM\JoinTable(name="api_condition_expression")
+     * @ORM\OneToOne(targetEntity=Expression::class, cascade={"persist", "remove"})
      */
-    private $expressions;
-
-    public function __construct()
-    {
-        $this->expressions = new ArrayCollection();
-    }
+    private ?Expression $expression = null;
 
     public function getId(): ?int
     {
@@ -91,50 +55,28 @@ class Condition
         return $this;
     }
 
-    /**
-     * @return Collection|Expression[]
-     */
-    public function getExpressions(): Collection
+    public function getExpression(): ?Expression
     {
-        return $this->expressions;
+        return $this->expression;
     }
 
-    public function toArrayExpressions(): array
+    public function setExpression(?Expression $expression): self
     {
-        return $this->expressions->toArray();
-    }
-
-    public function addExpression(Expression $expression): self
-    {
-        if (!$this->expressions->contains($expression)) {
-            $this->expressions[] = $expression;
-        }
+        $this->expression = $expression;
 
         return $this;
     }
 
-    public function removeExpression(Expression $expression): self
-    {
-        if ($this->expressions->contains($expression)) {
-            $this->expressions->removeElement($expression);
-        }
+    // Méthodes calculées
 
-        return $this;
+    public function getVariables(): array
+    {
+        if ($this->expression) {
+            preg_match_all('/\$[A-Z]{1,5}\.\w*/', $this->expression->getExpression(), $matches, PREG_PATTERN_ORDER);
+            
+            return $matches[0];
+        }
+        return [];
     }
 
-    /**
-     * @Groups({"simulation:item:read"})
-     */
-    public function isValide(): ?bool
-    {
-        if ($this->expressions->count() === 0) {
-            return null;
-        }
-        foreach ($this->expressions as $expression) {
-            if ($expression->getResponse() === true) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

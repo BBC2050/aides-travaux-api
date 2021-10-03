@@ -2,8 +2,6 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -13,112 +11,61 @@ use Symfony\Component\Serializer\Annotation\Groups;
  * @ORM\Table(name="api_valeur")
  */
 class Valeur
-{    
+{
     /**
-     * @var int
-     * 
-     * @Groups({
-     *      "aide:item:read",
-     *      "offre:item:read",
-     * })
-     * 
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      */
-    private $id;
+    private ?int $id = null;
 
     /**
-     * Description de la valeur
-     * 
-     * @var string
-     * 
-     * @Groups({ 
-     *      "aide:item:read",
-     *      "aide:item:write",
-     *      "offre:item:read",
-     *      "offre:item:write",
-     * })
-     * 
      * @Assert\NotBlank
      * @Assert\Type("string")
      * @Assert\Length(max=180)
      * 
      * @ORM\Column(type="string", length=180)
      */
-    private $description;
+    private ?string $description = null;
 
     /**
-     * Type de la valeur
-     * - montant
-     * - plafond 
-     * - facteur 
-     * - terme
-     * 
-     * @var string
-     * 
-     * @Groups({
-     *      "aide:item:read",
-     *      "aide:item:write",
-     *      "offre:item:read",
-     *      "offre:item:write",
-     * })
-     * 
      * @Assert\NotBlank
      * @Assert\Choice(choices=Valeur::TYPES)
      * 
      * @ORM\Column(type="string", length=255)
      */
-    private $type;
+    private ?string $type = null;
 
     /**
-     * Liste des conditions
+     * Application de la valeur à l'échelle du dispositif
      * 
-     * @var Collection|Condition[]
+     * @Assert\Type("bool")
      * 
-     * @Groups({
-     *      "aide:item:read",
-     *      "aide:item:write",
-     *      "offre:item:read",
-     *      "offre:item:write",
-     * })
-     * 
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private ?bool $globale = null;
+
+    /**
      * @Assert\Valid
      * 
-     * @ORM\ManyToMany(targetEntity=Condition::class, cascade={"persist", "remove"})
-     * @ORM\JoinTable(name="api_valeur_condition")
+     * @ORM\OneToOne(targetEntity=Expression::class, cascade={"persist", "remove"})
      */
-    private $conditions;
+    private ?Expression $condition = null;
 
     /**
-     * Expression à satisfaire
-     * 
-     * @var Expression
-     * 
-     * @Groups({
-     *      "aide:item:read",
-     *      "aide:item:write",
-     *      "offre:item:read",
-     *      "offre:item:write",
-     * })
-     * 
      * @Assert\NotBlank
      * @Assert\Valid
      * 
      * @ORM\OneToOne(targetEntity=Expression::class, cascade={"persist", "remove"})
-     * @ORM\JoinColumn(nullable=false)
      */
-    private $expression;
+    private ?Expression $expression = null;
 
     /**
      * @var array
      */
-    const TYPES = [ 'montant', 'plafond', 'facteur', 'terme' ];
-
-    public function __construct()
-    {
-        $this->conditions = new ArrayCollection();
-    }
+    const TYPES = [
+        'montant', 'plafond', 'plancher', 'ecretement', 'depenses', 'facteur', 'terme'
+    ];
 
     public function getId(): ?int
     {
@@ -149,33 +96,26 @@ class Valeur
         return $this;
     }
 
-    /**
-     * @return Collection|Condition[]
-     */
-    public function getConditions(): Collection
+    public function getGlobale(): ?bool
     {
-        return $this->conditions;
+        return $this->globale;
     }
 
-    public function toArrayConditions(): array
+    public function setGlobale(?bool $globale): self
     {
-        return $this->conditions->toArray();
-    }
-
-    public function addCondition(Condition $condition): self
-    {
-        if (!$this->conditions->contains($condition)) {
-            $this->conditions[] = $condition;
-        }
+        $this->globale = $globale;
 
         return $this;
     }
 
-    public function removeCondition(Condition $condition): self
+    public function getCondition(): ?Expression
     {
-        if ($this->conditions->contains($condition)) {
-            $this->conditions->removeElement($condition);
-        }
+        return $this->condition;
+    }
+
+    public function setCondition(?Expression $condition): self
+    {
+        $this->condition = $condition;
 
         return $this;
     }
@@ -190,6 +130,23 @@ class Valeur
         $this->expression = $expression;
 
         return $this;
+    }
+
+    // Méthodes calculées
+
+    public function getVariables(): array
+    {
+        $variables = [];
+
+        if ($this->expression) {
+            preg_match_all('/\$[A-Z]{1,5}\.\w*/', $this->expression->getExpression(), $matches, PREG_PATTERN_ORDER);
+            $variables = \array_merge($variables, $matches[0]);
+        }
+        if ($this->condition) {
+            preg_match_all('/\$[A-Z]{1,5}\.\w*/', $this->condition->getExpression(), $matches, PREG_PATTERN_ORDER);
+            $variables = \array_merge($variables, $matches[0]);
+        }
+        return \array_values(\array_unique($variables));
     }
 
 }

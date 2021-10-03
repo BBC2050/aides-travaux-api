@@ -25,16 +25,13 @@ class OffreRepositoryTest extends KernelTestCase
             ->getManager();
     }
 
-    public function testFindByOuvragesAndAides()
+    public function testFindAllAvailable(): void
     {
         /** @var OffreRepository */
         $repository = $this->em->getRepository(Offre::class);
 
-        $offres = $repository->findByOuvragesAndAides(
-            [27], [1, 2, 3, 4, 5, 7, 8]
-        );
-
-        $this->assertCount(5, $offres);
+        $offres = $repository->findAllAvailable([1, 2, 3], [1, 2], []);
+        $this->assertCount(20, $offres);
     }
 
     /**
@@ -45,6 +42,7 @@ class OffreRepositoryTest extends KernelTestCase
         parent::tearDown();
 
         $this->entityManager->close();
-        $this->entityManager = null; // avoid memory leaks
+        $this->entityManager = null;
     }
+
 }

@@ -8,7 +8,7 @@ use App\Resolver\ExpressionLanguageBuilder;
 
 class ExpressionLanguageBuilderTest extends TestCase
 {
-    public function testGet()
+    public function testGet(): void
     {
         $expressionLangage = ExpressionLanguageBuilder::get();
         $this->assertTrue($expressionLangage instanceof ExpressionLanguage);
